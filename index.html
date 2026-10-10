@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Claude PFC">
+<title>Claude PFC</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--k:#1c2420;--err:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:480px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:22px;margin:4px 0 4px}
+.lead{color:var(--sub);font-size:14px;margin:0 0 18px;line-height:1.6}
+.row{background:var(--card);border:1px solid var(--line);border-left-width:6px;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.row label{flex:1;font-size:16px;font-weight:600}
+.row small{display:block;font-weight:400;color:var(--sub);font-size:12px}
+.row input{width:120px;font-size:22px;text-align:right;border:0;border-bottom:2px solid var(--line);background:transparent;color:var(--ink);padding:6px 2px;font-family:inherit;border-radius:0}
+.row input:focus{outline:none;border-bottom-color:var(--ink)}
+.row input.auto{color:var(--sub);border-bottom-style:dashed}
+.row .u{color:var(--sub);font-size:14px;width:34px}
+.p{border-left-color:var(--p)}.f{border-left-color:var(--f)}.c{border-left-color:var(--c)}.k{border-left-color:var(--k)}
+#msg{min-height:48px;margin:14px 2px;font-size:15px;line-height:1.6}
+#msg.err{color:var(--err)}
+#bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);margin:6px 0 8px}
+#bar i{display:block;height:100%}
+#ratio{font-size:13px;color:var(--sub)}
+button{margin-top:18px;width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;font-family:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+<h1>PFC計算</h1>
+<p class="lead">4項目のうち、わかっている3つを入力してください。空欄の1つを自動で計算します。</p>
+
+<div class="row p"><label for="p">たんぱく質 (P)<small>1gあたり4kcal</small></label><input id="p" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row f"><label for="f">脂質 (F)<small>1gあたり9kcal</small></label><input id="f" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row c"><label for="c">炭水化物 (C)<small>1gあたり4kcal</small></label><input id="c" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row k"><label for="k">カロリー<small>P×4 + F×9 + C×4</small></label><input id="k" type="text" inputmode="decimal" autocomplete="off"><span class="u">kcal</span></div>
+
+<div id="msg" aria-live="polite"></div>
+<div id="bar"></div>
+<div id="ratio"></div>
+<button id="clear" type="button">すべてクリア</button>
+</main>
+<script>
+(function(){
+var ids=["p","f","c","k"],el={},auto=null;
+ids.forEach(function(i){el[i]=document.getElementById(i)});
+var msg=document.getElementById("msg"),bar=document.getElementById("bar"),ratio=document.getElementById("ratio");
+function num(s){s=String(s).replace(/[０-９．]/g,function(c){return c==="．"?".":String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
+function fmt(n){return String(Math.round(n*10)/10)}
+function setMsg(t,e){msg.textContent=t;msg.className=e?"err":""}
+function draw(p,f,c){
+  var kp=p*4,kf=f*9,kc=c*4,t=kp+kf+kc;
+  if(!(t>0)){bar.innerHTML="";ratio.textContent="";return}
+  var a=kp/t*100,b=kf/t*100,d=kc/t*100;
+  bar.innerHTML='<i style="width:'+a+'%;background:var(--p)"></i><i style="width:'+b+'%;background:var(--f)"></i><i style="width:'+d+'%;background:var(--c)"></i>';
+  ratio.textContent="カロリー比 P "+fmt(a)+"% / F "+fmt(b)+"% / C "+fmt(d)+"%";
+}
+function calc(from){
+  if(auto&&from!==auto){el[auto].classList.remove("auto");el[auto].value="";auto=null}
+  if(from&&from===auto){el[auto].classList.remove("auto");auto=null}
+  var v={},empty=[],bad=false;
+  ids.forEach(function(i){var n=num(el[i].value);if(n===null)empty.push(i);else if(isNaN(n))bad=true;v[i]=n});
+  bar.innerHTML="";ratio.textContent="";
+  if(bad){setMsg("数字(0以上)で入力してください。",true);return}
+  if(empty.length>=2){setMsg(empty.length===4?"":"あと"+(empty.length-1)+"項目入力すると計算します。",false);return}
+  if(empty.length===0){
+    var t=v.p*4+v.f*9+v.c*4,d=v.k-t;
+    setMsg(Math.abs(d)<0.5?"4項目は一致しています。":"P・F・Cから計算すると "+fmt(t)+" kcal です(入力との差 "+(d>0?"+":"")+fmt(d)+" kcal)。",false);
+    draw(v.p,v.f,v.c);return}
+  var m=empty[0],r,name={p:"たんぱく質",f:"脂質",c:"炭水化物",k:"カロリー"}[m];
+  if(m==="k")r=v.p*4+v.f*9+v.c*4;
+  else if(m==="p")r=(v.k-v.f*9-v.c*4)/4;
+  else if(m==="f")r=(v.k-v.p*4-v.c*4)/9;
+  else r=(v.k-v.p*4-v.f*9)/4;
+  if(r<0){setMsg("計算結果がマイナスになります。入力値がカロリーと合っているか確認してください。",true);return}
+  el[m].value=fmt(r);el[m].classList.add("auto");auto=m;
+  setMsg(name+"は "+fmt(r)+(m==="k"?" kcal":" g")+" です。",false);
+  draw(m==="p"?r:v.p,m==="f"?r:v.f,m==="c"?r:v.c);
+}
+ids.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
+document.getElementById("clear").addEventListener("click",function(){ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;setMsg("",false);bar.innerHTML="";ratio.textContent=""});
+})();
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
