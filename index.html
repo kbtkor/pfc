@@ -18,8 +18,7 @@ main{max-width:480px;margin:0 auto;padding:20px 16px 32px}
 h1{font-size:22px;margin:4px 0 4px}
 .lead{color:var(--sub);font-size:14px;margin:0 0 14px;line-height:1.6}
 .scan{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
-.scan b{font-size:15px}
-.scan small{display:block;color:var(--sub);font-size:12px;line-height:1.6;margin:4px 0 8px}
+.scan b{font-size:15px;display:block;margin-bottom:8px}
 .scan textarea{width:100%;min-height:76px;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px;resize:vertical}
 #scanmsg{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px;min-height:20px}
 #scanmsg.err{color:var(--err)}
@@ -47,7 +46,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 
 <div class="scan">
 <b>ラベルから読み取る</b>
-<small>この欄を長押し →「テキストをスキャン」で栄養成分表示を撮影。または写真の文字をコピーして貼り付け。</small>
 <textarea id="scan" placeholder="ここに栄養成分表示の文字を入れる" autocomplete="off"></textarea>
 <div id="scanmsg" aria-live="polite"></div>
 </div>
