@@ -16,7 +16,13 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
 main{max-width:480px;margin:0 auto;padding:20px 16px 32px}
 h1{font-size:22px;margin:4px 0 4px}
-.lead{color:var(--sub);font-size:14px;margin:0 0 18px;line-height:1.6}
+.lead{color:var(--sub);font-size:14px;margin:0 0 14px;line-height:1.6}
+.scan{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.scan b{font-size:15px}
+.scan small{display:block;color:var(--sub);font-size:12px;line-height:1.6;margin:4px 0 8px}
+.scan textarea{width:100%;min-height:76px;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px;resize:vertical}
+#scanmsg{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px;min-height:20px}
+#scanmsg.err{color:var(--err)}
 .row{background:var(--card);border:1px solid var(--line);border-left-width:6px;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
 .row label{flex:1;font-size:16px;font-weight:600}
 .row small{display:block;font-weight:400;color:var(--sub);font-size:12px}
@@ -31,13 +37,20 @@ h1{font-size:22px;margin:4px 0 4px}
 #bar i{display:block;height:100%}
 #ratio{font-size:13px;color:var(--sub)}
 button{margin-top:18px;width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;font-family:inherit}
-button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 </style>
 </head>
 <body>
 <main>
 <h1>PFC計算</h1>
 <p class="lead">4項目のうち、わかっている3つを入力してください。空欄の1つを自動で計算します。</p>
+
+<div class="scan">
+<b>ラベルから読み取る</b>
+<small>この欄を長押し →「テキストをスキャン」で栄養成分表示を撮影。または写真の文字をコピーして貼り付け。</small>
+<textarea id="scan" placeholder="ここに栄養成分表示の文字を入れる" autocomplete="off"></textarea>
+<div id="scanmsg" aria-live="polite"></div>
+</div>
 
 <div class="row p"><label for="p">たんぱく質 (P)</label><input id="p" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
 <div class="row f"><label for="f">脂質 (F)</label><input id="f" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
@@ -54,7 +67,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-of
 var ids=["p","f","c","k"],el={},auto=null;
 ids.forEach(function(i){el[i]=document.getElementById(i)});
 var msg=document.getElementById("msg"),bar=document.getElementById("bar"),ratio=document.getElementById("ratio");
-function num(s){s=String(s).replace(/[０-９．]/g,function(c){return c==="．"?".":String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
+var scan=document.getElementById("scan"),scanmsg=document.getElementById("scanmsg");
+function half(s){return String(s).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/[．]/g,".").replace(/[，]/g,",")}
+function num(s){s=half(s).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
 function fmt(n){return String(Math.round(n*10)/10)}
 function setMsg(t,e){msg.textContent=t;msg.className=e?"err":""}
 function draw(p,f,c){
@@ -86,8 +101,31 @@ function calc(from){
   setMsg(name+"は "+fmt(r)+(m==="k"?" kcal":" g")+" です。",false);
   draw(m==="p"?r:v.p,m==="f"?r:v.f,m==="c"?r:v.c);
 }
+var NUM="([0-9]+(?:\\.[0-9]+)?)";
+var KEYS={
+  p:new RegExp("(?:たんぱく質|タンパク質|蛋白質|たん白質)[^0-9\\n]{0,8}?"+NUM),
+  f:new RegExp("脂質[^0-9\\n]{0,8}?"+NUM),
+  c:new RegExp("炭水化物[^0-9\\n]{0,8}?"+NUM)
+};
+function parse(){
+  var t=half(scan.value).replace(/\s+/g," ").replace(/\s?\.\s?/g,".");
+  if(t.replace(/\s/g,"")===""){scanmsg.textContent="";scanmsg.className="";return}
+  var got={},n=0,m;
+  var km=t.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:kcal|Kcal|KCAL|キロカロリー)/);
+  if(km){got.k=Number(km[1]);n++}
+  else{m=t.match(new RegExp("(?:エネルギー|熱量|カロリー)[^0-9\\n]{0,8}?"+NUM));if(m){got.k=Number(m[1]);n++}}
+  ["p","f","c"].forEach(function(k){var r=t.match(KEYS[k]);if(r){got[k]=Number(r[1]);n++}});
+  if(n===0){scanmsg.textContent="数値を読み取れませんでした。たんぱく質・脂質・炭水化物などの文字が入っているか確認してください。";scanmsg.className="err";return}
+  ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;
+  ids.forEach(function(i){if(got[i]!==undefined)el[i].value=fmt(got[i])});
+  var names={k:"カロリー",p:"P",f:"F",c:"C"},found=[];
+  ["k","p","f","c"].forEach(function(i){if(got[i]!==undefined)found.push(names[i])});
+  scanmsg.textContent="読み取れた項目: "+found.join("・")+"。数値がラベルと合っているか確認してください(1食分か100gあたりかにも注意)。";scanmsg.className="";
+  calc(null);
+}
+scan.addEventListener("input",parse);
 ids.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
-document.getElementById("clear").addEventListener("click",function(){ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;setMsg("",false);bar.innerHTML="";ratio.textContent=""});
+document.getElementById("clear").addEventListener("click",function(){ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""});
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
 </script>
