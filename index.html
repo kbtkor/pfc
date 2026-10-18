@@ -19,6 +19,7 @@ main{max-width:480px;margin:0 auto;padding:12px 16px 120px}
 h1{font-size:20px;margin:4px 0 0}
 #tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 0;z-index:5}
 button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
+button:disabled{opacity:.3}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #tabs button{flex:1;padding:10px 4px}
 #tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -40,9 +41,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 summary{font-size:15px;font-weight:600}
 .gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:13px;color:var(--sub)}
 .gg input{margin-top:4px}
+.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.lh b{font-size:15px}
+.lh button{padding:6px 12px;font-size:14px}
+.lh button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .item{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 .item:first-child{border-top:0;padding-top:0}
 .item:last-child{padding-bottom:0}
+.item button{flex:none;width:auto;margin:0;white-space:nowrap}
+.item .mv{width:44px;padding:8px 0}
 .n{flex:1;min-width:0}
 .n b{display:block;font-size:15px;overflow-wrap:anywhere}
 .n span{font-size:12px;color:var(--sub)}
@@ -86,7 +93,7 @@ summary{font-size:15px;font-weight:600}
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
 <label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
 </div></details>
-<div class="card" id="elist"></div>
+<div class="card"><div class="lh"><b>記録</b><button id="esort" aria-pressed="false">並び替え</button></div><div id="elist"></div></div>
 </section>
 
 <section id="t-calc" hidden>
@@ -117,7 +124,7 @@ summary{font-size:15px;font-weight:600}
 
 <section id="t-my" hidden>
 <div class="card"><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label><div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
-<div class="card" id="mylist"></div>
+<div class="card"><div class="lh"><b>マイリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
 </section>
 </main>
 <script>
@@ -137,8 +144,10 @@ function ymd(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate()
 function shift(s,n){var a=s.split("-");return ymd(new Date(+a[0],+a[1]-1,+a[2]+n))}
 function lab(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);return(+a[1])+"月"+(+a[2])+"日("+"日月火水木金土"[d.getDay()]+")"}
 var cur=ymd(new Date());
+var sortE=false,sortM=false;
 function tot(l){var t={p:0,f:0,c:0,k:0};l.forEach(function(e){for(var k in t)t[k]+=e[k]});return t}
 function add(date,e){e.id=Date.now()+"_"+Math.floor(Math.random()*1e4);(D.entries[date]=D.entries[date]||[]).push(e);save()}
+function mv(arr,id,dir){var i=-1,j,t;arr.forEach(function(x,n){if(String(x.id)===id)i=n});j=i+dir;if(i<0||j<0||j>=arr.length)return false;t=arr[i];arr[i]=arr[j];arr[j]=t;return true}
 
 var ids=["p","f","c","k"],el={},auto=null;
 ids.forEach(function(i){el[i]=$(i)});
@@ -223,12 +232,24 @@ function rToday(){
     h+='</div>'});
   if(!D.goal.k&&!D.goal.p&&!D.goal.f&&!D.goal.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
   $("sum").innerHTML=h;
-  $("elist").innerHTML=l.length?l.map(function(e){return'<div class="item"><div class="n"><b>'+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div><button data-del="'+e.id+'">削除</button></div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「マイ」から記録できます。</div>';
+  if(l.length<2)sortE=false;
+  var sb=$("esort");sb.hidden=l.length<2;sb.textContent=sortE?"完了":"並び替え";sb.setAttribute("aria-pressed",sortE?"true":"false");
+  $("elist").innerHTML=l.length?l.map(function(e,i){
+    var b=sortE?'<button class="mv" data-up="'+e.id+'" aria-label="上へ"'+(i===0?" disabled":"")+'>↑</button><button class="mv" data-dn="'+e.id+'" aria-label="下へ"'+(i===l.length-1?" disabled":"")+'>↓</button>':'<button data-del="'+e.id+'">削除</button>';
+    return'<div class="item"><div class="n"><b>'+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「マイ」から記録できます。</div>';
 }
+$("esort").onclick=function(){sortE=!sortE;rToday()};
 $("elist").addEventListener("click",function(e){
-  var b=e.target.closest("[data-del]");if(!b||!confirm("削除しますか?"))return;
-  D.entries[cur]=(D.entries[cur]||[]).filter(function(x){return String(x.id)!==b.dataset.del});
-  if(!D.entries[cur].length)delete D.entries[cur];save();rToday();
+  var b=e.target.closest("button");if(!b)return;
+  var l=D.entries[cur]||[];
+  if(b.dataset.del){
+    if(!confirm("削除しますか?"))return;
+    D.entries[cur]=l.filter(function(x){return String(x.id)!==b.dataset.del});
+    if(!D.entries[cur].length)delete D.entries[cur];save();rToday();return;
+  }
+  if(b.dataset.up||b.dataset.dn){
+    if(mv(l,b.dataset.up||b.dataset.dn,b.dataset.up?-1:1)){save();rToday()}
+  }
 });
 $("dprev").onclick=function(){cur=shift(cur,-1);rToday()};
 $("dnext").onclick=function(){cur=shift(cur,1);rToday()};
@@ -250,22 +271,32 @@ function rHist(){
 $("t-hist").addEventListener("click",function(e){var b=e.target.closest("[data-d]");if(b){cur=b.dataset.d;show("today")}});
 
 function rMy(){
-  $("mylist").innerHTML=D.my.length?D.my.map(function(e){return'<div class="item"><div class="n"><b>'+esc(e.name)+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div><button data-use="'+e.id+'">記録</button><button data-mdel="'+e.id+'">削除</button></div>'}).join(""):'<div class="rem">マイリストは空です。「計算」で4項目を入れて名前を付け、「マイに登録」を押してください。</div>';
+  var l=D.my;
+  if(l.length<2)sortM=false;
+  var sb=$("msort");sb.hidden=l.length<2;sb.textContent=sortM?"完了":"並び替え";sb.setAttribute("aria-pressed",sortM?"true":"false");
+  $("mylist").innerHTML=l.length?l.map(function(e,i){
+    var b=sortM?'<button class="mv" data-up="'+e.id+'" aria-label="上へ"'+(i===0?" disabled":"")+'>↑</button><button class="mv" data-dn="'+e.id+'" aria-label="下へ"'+(i===l.length-1?" disabled":"")+'>↓</button>':'<button data-use="'+e.id+'">記録</button><button data-mdel="'+e.id+'">削除</button>';
+    return'<div class="item"><div class="n"><b>'+esc(e.name)+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">マイリストは空です。「計算」で4項目を入れて名前を付け、「マイに登録」を押してください。</div>';
 }
+$("msort").onclick=function(){sortM=!sortM;rMy()};
 $("mylist").addEventListener("click",function(e){
-  var u=e.target.closest("[data-use]"),x=e.target.closest("[data-mdel]"),it;
-  if(u){
-    D.my.forEach(function(y){if(y.id===u.dataset.use)it=y});if(!it)return;
+  var b=e.target.closest("button");if(!b)return;
+  var it;
+  if(b.dataset.use){
+    D.my.forEach(function(y){if(y.id===b.dataset.use)it=y});if(!it)return;
     var m=num($("mult").value);if(!m||isNaN(m))m=1;
     var r=function(v){return Math.round(v*m*10)/10};
     add(cur,{name:it.name+(m!==1?" ×"+m:""),p:r(it.p),f:r(it.f),c:r(it.c),k:r(it.k)});
     $("mymsg").textContent=lab(cur)+"に記録しました。";
-  }else if(x&&confirm("マイリストから削除しますか?")){
-    D.my=D.my.filter(function(y){return y.id!==x.dataset.mdel});save();rMy();
+  }else if(b.dataset.mdel){
+    if(confirm("マイリストから削除しますか?")){D.my=D.my.filter(function(y){return y.id!==b.dataset.mdel});save();rMy()}
+  }else if(b.dataset.up||b.dataset.dn){
+    if(mv(D.my,b.dataset.up||b.dataset.dn,b.dataset.up?-1:1)){save();rMy()}
   }
 });
 
 function show(t){
+  sortE=false;sortM=false;
   ["today","calc","hist","my"].forEach(function(x){$("t-"+x).hidden=x!==t});
   [].forEach.call(document.querySelectorAll("#tabs button"),function(b){b.setAttribute("aria-selected",b.dataset.t===t?"true":"false")});
   if(t==="today")rToday();if(t==="hist")rHist();if(t==="my"){rMy();$("mymsg").textContent=""}if(t==="calc")dest();
