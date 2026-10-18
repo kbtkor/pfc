@@ -1,4 +1,284 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Claude PFC">
+<title>Claude PFC</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--k:#1c2420;--err:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+main{max-width:480px;margin:0 auto;padding:12px 16px 120px}
+h1{font-size:20px;margin:4px 0 0}
+#tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 0;z-index:5}
+button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#tabs button{flex:1;padding:10px 4px}
+#tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
+.rem{font-size:12px;color:var(--sub);line-height:1.6}
+.bad{font-size:13px;color:var(--err);line-height:1.6}
+.lead{color:var(--sub);font-size:14px;margin:4px 0 12px;line-height:1.6}
+.datebar{display:flex;align-items:center;gap:8px;margin:4px 0 12px}
+.datebar button{width:48px}
+.datebar div{flex:1;text-align:center;font-size:17px;font-weight:600}
+.srow{margin-bottom:12px}
+.srow:last-child{margin-bottom:0}
+.shead{display:flex;justify-content:space-between;font-size:15px}
+.pb{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 4px}
+.pb i{display:block;height:100%}
+.over{color:var(--err)}
+summary{font-size:15px;font-weight:600}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:13px;color:var(--sub)}
+.gg input{margin-top:4px}
+.item{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:0}
+.item:last-child{padding-bottom:0}
+.n{flex:1;min-width:0}
+.n b{display:block;font-size:15px;overflow-wrap:anywhere}
+.n span{font-size:12px;color:var(--sub)}
+.row{background:var(--card);border:1px solid var(--line);border-left-width:6px;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.row label{flex:1;font-size:16px;font-weight:600}
+.row small{display:block;font-weight:400;color:var(--sub);font-size:12px}
+.row input{width:120px;font-size:22px;text-align:right;border:0;border-bottom:2px solid var(--line);background:transparent;color:var(--ink);padding:6px 2px;font-family:inherit;border-radius:0}
+.row input:focus{outline:none;border-bottom-color:var(--ink)}
+.row input.auto{color:var(--sub);border-bottom-style:dashed}
+.row .u{color:var(--sub);font-size:14px;width:34px}
+.p{border-left-color:var(--p)}.f{border-left-color:var(--f)}.c{border-left-color:var(--c)}.k{border-left-color:var(--k)}
+#msg{min-height:48px;margin:14px 2px;font-size:15px;line-height:1.6}
+#msg.err{color:var(--err)}
+#bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);margin:6px 0 8px}
+#bar i{display:block;height:100%}
+#ratio{font-size:13px;color:var(--sub)}
+#scanmsg{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px;min-height:20px}
+#scanmsg.err{color:var(--err)}
+#chart{display:flex;align-items:flex-end;gap:2px;height:130px;position:relative;margin:8px 0 24px;border-bottom:1px solid var(--line)}
+.col{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;position:relative;padding:0;border:0;border-radius:0;background:transparent}
+.col i{display:block;width:100%;background:var(--ink);opacity:.85;border-radius:3px 3px 0 0}
+.col em{position:absolute;bottom:-18px;font-size:9px;font-style:normal;color:var(--sub)}
+#gline{position:absolute;left:0;right:0;border-top:1px dashed var(--err);pointer-events:none}
+.hrow{display:flex;justify-content:space-between;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;padding:10px 0;font-size:14px;text-align:left}
+.hrow:first-child{border-top:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Claude PFC</h1>
+<nav id="tabs"><button data-t="today">今日</button><button data-t="calc">計算</button><button data-t="hist">履歴</button><button data-t="my">マイ</button></nav>
+<div id="warn" class="bad" hidden>この環境では記録を保存できません(プライベートブラウズ中など)。</div>
+
+<section id="t-today">
+<div class="datebar"><button id="dprev" aria-label="前の日">‹</button><div id="dlabel"></div><button id="dnext" aria-label="次の日">›</button></div>
+<div class="card" id="sum"></div>
+<details class="card"><summary>目標を設定</summary>
+<div class="gg">
+<label>カロリー(kcal)<input class="fi" id="gk" inputmode="decimal"></label>
+<label>たんぱく質(g)<input class="fi" id="gp" inputmode="decimal"></label>
+<label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
+<label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
+</div></details>
+<div class="card" id="elist"></div>
+</section>
+
+<section id="t-calc" hidden>
+<p class="lead">4項目のうち、わかっている3つを入力してください。空欄の1つを自動で計算します。</p>
+<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px">ラベルから読み取る</b>
+<textarea class="fi" id="scan" rows="3" placeholder="ここに栄養成分表示の文字を入れる" autocomplete="off"></textarea>
+<div id="scanmsg" aria-live="polite"></div></div>
+<div class="row p"><label for="p">たんぱく質 (P)</label><input id="p" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row f"><label for="f">脂質 (F)</label><input id="f" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row c"><label for="c">炭水化物 (C)</label><input id="c" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
+<div class="row k"><label for="k">カロリー<small>P×4 + F×9 + C×4</small></label><input id="k" type="text" inputmode="decimal" autocomplete="off"><span class="u">kcal</span></div>
+<div id="msg" aria-live="polite"></div>
+<div id="bar"></div>
+<div id="ratio"></div>
+<div class="card" style="margin-top:16px">
+<div class="rem" style="margin-bottom:8px">記録先: <span id="dest"></span></div>
+<input class="fi" id="ename" placeholder="名前(例: 朝食、プロテイン)" autocomplete="off">
+<button class="wide" id="addlog">この日に記録</button>
+<button class="wide" id="addmy">マイに登録</button>
+<div id="savemsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
+<button class="wide" id="clear" type="button">すべてクリア</button>
+</section>
+
+<section id="t-hist" hidden>
+<div class="card"><b style="font-size:15px">直近14日のカロリー</b><div id="chart"></div><div id="avg" class="rem"></div></div>
+<div class="card" id="hlist"></div>
+</section>
+
+<section id="t-my" hidden>
+<div class="card"><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label><div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
+<div class="card" id="mylist"></div>
+</section>
+</main>
+<script>
+(function(){
+function $(i){return document.getElementById(i)}
+var KEY="claude_pfc_v1";
+function fix(d){d.goal=d.goal||{};d.entries=d.entries||{};d.my=d.my||[];return d}
+function load(){try{var s=localStorage.getItem(KEY);if(s){var d=JSON.parse(s);if(d&&typeof d==="object")return fix(d)}}catch(e){}return fix({})}
+var D=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(x){$("warn").hidden=false}}
+function half(s){return String(s).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/[．]/g,".").replace(/[，]/g,",")}
+function num(s){s=half(s).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
+function fmt(n){return String(Math.round(n*10)/10)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function p2(n){return n<10?"0"+n:""+n}
+function ymd(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())}
+function shift(s,n){var a=s.split("-");return ymd(new Date(+a[0],+a[1]-1,+a[2]+n))}
+function lab(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);return(+a[1])+"月"+(+a[2])+"日("+"日月火水木金土"[d.getDay()]+")"}
+var cur=ymd(new Date());
+function tot(l){var t={p:0,f:0,c:0,k:0};l.forEach(function(e){for(var k in t)t[k]+=e[k]});return t}
+function add(date,e){e.id=Date.now()+"_"+Math.floor(Math.random()*1e4);(D.entries[date]=D.entries[date]||[]).push(e);save()}
+
+var ids=["p","f","c","k"],el={},auto=null;
+ids.forEach(function(i){el[i]=$(i)});
+var msg=$("msg"),bar=$("bar"),ratio=$("ratio"),scan=$("scan"),scanmsg=$("scanmsg");
+function setMsg(t,e){msg.textContent=t;msg.className=e?"err":""}
+function draw(p,f,c){
+  var kp=p*4,kf=f*9,kc=c*4,t=kp+kf+kc;
+  if(!(t>0)){bar.innerHTML="";ratio.textContent="";return}
+  var a=kp/t*100,b=kf/t*100,d=kc/t*100;
+  bar.innerHTML='<i style="width:'+a+'%;background:var(--p)"></i><i style="width:'+b+'%;background:var(--f)"></i><i style="width:'+d+'%;background:var(--c)"></i>';
+  ratio.textContent="カロリー比 P "+fmt(a)+"% / F "+fmt(b)+"% / C "+fmt(d)+"%";
+}
+function calc(from){
+  if(auto&&from!==auto){el[auto].classList.remove("auto");el[auto].value="";auto=null}
+  if(from&&from===auto){el[auto].classList.remove("auto");auto=null}
+  var v={},empty=[],bad=false;
+  ids.forEach(function(i){var n=num(el[i].value);if(n===null)empty.push(i);else if(isNaN(n))bad=true;v[i]=n});
+  bar.innerHTML="";ratio.textContent="";
+  if(bad){setMsg("数字(0以上)で入力してください。",true);return}
+  if(empty.length>=2){setMsg(empty.length===4?"":"あと"+(empty.length-1)+"項目入力すると計算します。",false);return}
+  if(empty.length===0){
+    var t=v.p*4+v.f*9+v.c*4,d=v.k-t;
+    setMsg(Math.abs(d)<0.5?"4項目は一致しています。":"P・F・Cから計算すると "+fmt(t)+" kcal です(入力との差 "+(d>0?"+":"")+fmt(d)+" kcal)。",false);
+    draw(v.p,v.f,v.c);return}
+  var m=empty[0],r,name={p:"たんぱく質",f:"脂質",c:"炭水化物",k:"カロリー"}[m];
+  if(m==="k")r=v.p*4+v.f*9+v.c*4;
+  else if(m==="p")r=(v.k-v.f*9-v.c*4)/4;
+  else if(m==="f")r=(v.k-v.p*4-v.c*4)/9;
+  else r=(v.k-v.p*4-v.f*9)/4;
+  if(r<0){setMsg("計算結果がマイナスになります。入力値がカロリーと合っているか確認してください。",true);return}
+  el[m].value=fmt(r);el[m].classList.add("auto");auto=m;
+  setMsg(name+"は "+fmt(r)+(m==="k"?" kcal":" g")+" です。",false);
+  draw(m==="p"?r:v.p,m==="f"?r:v.f,m==="c"?r:v.c);
+}
+var NUM="([0-9]+(?:\\.[0-9]+)?)";
+var KEYS={
+  p:new RegExp("(?:たんぱく質|タンパク質|蛋白質|たん白質)[^0-9\\n]{0,8}?"+NUM),
+  f:new RegExp("脂質[^0-9\\n]{0,8}?"+NUM),
+  c:new RegExp("炭水化物[^0-9\\n]{0,8}?"+NUM)
+};
+function parse(){
+  var t=half(scan.value).replace(/\s+/g," ").replace(/\s?\.\s?/g,".");
+  if(t.replace(/\s/g,"")===""){scanmsg.textContent="";scanmsg.className="";return}
+  var got={},n=0,m;
+  var km=t.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:kcal|Kcal|KCAL|キロカロリー)/);
+  if(km){got.k=Number(km[1]);n++}
+  else{m=t.match(new RegExp("(?:エネルギー|熱量|カロリー)[^0-9\\n]{0,8}?"+NUM));if(m){got.k=Number(m[1]);n++}}
+  ["p","f","c"].forEach(function(k){var r=t.match(KEYS[k]);if(r){got[k]=Number(r[1]);n++}});
+  if(n===0){scanmsg.textContent="数値を読み取れませんでした。たんぱく質・脂質・炭水化物などの文字が入っているか確認してください。";scanmsg.className="err";return}
+  ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;
+  ids.forEach(function(i){if(got[i]!==undefined)el[i].value=fmt(got[i])});
+  var names={k:"カロリー",p:"P",f:"F",c:"C"},found=[];
+  ["k","p","f","c"].forEach(function(i){if(got[i]!==undefined)found.push(names[i])});
+  scanmsg.textContent="読み取れた項目: "+found.join("・")+"。数値がラベルと合っているか確認してください(1食分か100gあたりかにも注意)。";scanmsg.className="";
+  calc(null);
+}
+scan.addEventListener("input",parse);
+ids.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
+function clr(){ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""}
+$("clear").onclick=function(){clr();$("ename").value="";sm("")};
+
+function sm(t,e){var s=$("savemsg");s.textContent=t;s.className=e?"bad":"rem"}
+function vals(){var v={};for(var i=0;i<4;i++){var n=num(el[ids[i]].value);if(n===null||isNaN(n))return null;v[ids[i]]=n}return v}
+$("addlog").onclick=function(){
+  var v=vals();if(!v){sm("P・F・C・カロリーの4項目がそろうと記録できます。",1);return}
+  v.name=$("ename").value.trim();add(cur,v);$("ename").value="";clr();sm(lab(cur)+"に記録しました。「今日」で確認できます。");
+};
+$("addmy").onclick=function(){
+  var v=vals(),nm=$("ename").value.trim();
+  if(!v||!nm){sm("名前と4項目を入力してください。",1);return}
+  v.name=nm;v.id=Date.now()+"_"+Math.floor(Math.random()*1e4);D.my.push(v);save();$("ename").value="";sm("マイに登録しました。");
+};
+
+var KS=[["k","カロリー","kcal","--k"],["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"]];
+function dest(){$("dest").textContent=lab(cur)}
+function rToday(){
+  dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
+  var l=D.entries[cur]||[],t=tot(l),h="";
+  KS.forEach(function(s){var g=D.goal[s[0]]||0,v=t[s[0]];
+    h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span>'+fmt(v)+(g?" / "+fmt(g):"")+" "+s[2]+'</span></div>';
+    if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem'+(o?" over":"")+'">'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</div>'}
+    h+='</div>'});
+  if(!D.goal.k&&!D.goal.p&&!D.goal.f&&!D.goal.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
+  $("sum").innerHTML=h;
+  $("elist").innerHTML=l.length?l.map(function(e){return'<div class="item"><div class="n"><b>'+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div><button data-del="'+e.id+'">削除</button></div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「マイ」から記録できます。</div>';
+}
+$("elist").addEventListener("click",function(e){
+  var b=e.target.closest("[data-del]");if(!b||!confirm("削除しますか?"))return;
+  D.entries[cur]=(D.entries[cur]||[]).filter(function(x){return String(x.id)!==b.dataset.del});
+  if(!D.entries[cur].length)delete D.entries[cur];save();rToday();
+});
+$("dprev").onclick=function(){cur=shift(cur,-1);rToday()};
+$("dnext").onclick=function(){cur=shift(cur,1);rToday()};
+$("dlabel").onclick=function(){cur=ymd(new Date());rToday()};
+["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.value=D.goal[k]||"";i.addEventListener("input",function(){var n=num(i.value);D.goal[k]=n&&!isNaN(n)?n:0;save();rToday()})});
+
+function rHist(){
+  var today=ymd(new Date()),days=[],mx=D.goal.k||0,i,d,t;
+  for(i=13;i>=0;i--){d=shift(today,-i);t=tot(D.entries[d]||[]);days.push([d,t]);if(t.k>mx)mx=t.k}
+  if(!mx)mx=1;
+  $("chart").innerHTML=days.map(function(x){return'<button class="col" data-d="'+x[0]+'" aria-label="'+lab(x[0])+'"><i style="height:'+(x[1].k/mx*100)+'%"></i><em>'+(+x[0].slice(8))+'</em></button>'}).join("")+(D.goal.k?'<div id="gline" style="top:'+(100-D.goal.k/mx*100)+'%"></div>':"");
+  var n=0,s={p:0,f:0,c:0,k:0};
+  days.forEach(function(x){if((D.entries[x[0]]||[]).length){n++;for(var k in s)s[k]+=x[1][k]}});
+  $("avg").textContent=n?"記録のある日(直近14日・"+n+"日)の平均: "+fmt(s.k/n)+" kcal / P "+fmt(s.p/n)+" / F "+fmt(s.f/n)+" / C "+fmt(s.c/n):"記録はまだありません。";
+  var h="";
+  for(i=0;i<30;i++){d=shift(today,-i);if((D.entries[d]||[]).length){t=tot(D.entries[d]);h+='<button class="hrow" data-d="'+d+'"><span>'+lab(d)+'</span><span>'+fmt(t.k)+' kcal · P'+fmt(t.p)+' F'+fmt(t.f)+' C'+fmt(t.c)+'</span></button>'}}
+  $("hlist").innerHTML=h||'<div class="rem">直近30日の記録はありません。</div>';
+}
+$("t-hist").addEventListener("click",function(e){var b=e.target.closest("[data-d]");if(b){cur=b.dataset.d;show("today")}});
+
+function rMy(){
+  $("mylist").innerHTML=D.my.length?D.my.map(function(e){return'<div class="item"><div class="n"><b>'+esc(e.name)+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div><button data-use="'+e.id+'">記録</button><button data-mdel="'+e.id+'">削除</button></div>'}).join(""):'<div class="rem">マイリストは空です。「計算」で4項目を入れて名前を付け、「マイに登録」を押してください。</div>';
+}
+$("mylist").addEventListener("click",function(e){
+  var u=e.target.closest("[data-use]"),x=e.target.closest("[data-mdel]"),it;
+  if(u){
+    D.my.forEach(function(y){if(y.id===u.dataset.use)it=y});if(!it)return;
+    var m=num($("mult").value);if(!m||isNaN(m))m=1;
+    var r=function(v){return Math.round(v*m*10)/10};
+    add(cur,{name:it.name+(m!==1?" ×"+m:""),p:r(it.p),f:r(it.f),c:r(it.c),k:r(it.k)});
+    $("mymsg").textContent=lab(cur)+"に記録しました。";
+  }else if(x&&confirm("マイリストから削除しますか?")){
+    D.my=D.my.filter(function(y){return y.id!==x.dataset.mdel});save();rMy();
+  }
+});
+
+function show(t){
+  ["today","calc","hist","my"].forEach(function(x){$("t-"+x).hidden=x!==t});
+  [].forEach.call(document.querySelectorAll("#tabs button"),function(b){b.setAttribute("aria-selected",b.dataset.t===t?"true":"false")});
+  if(t==="today")rToday();if(t==="hist")rHist();if(t==="my"){rMy();$("mymsg").textContent=""}if(t==="calc")dest();
+  window.scrollTo(0,0);
+}
+$("tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(b.dataset.t)});
+show("today");
+})();
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
+</script>
+</body>
+</html>
+
 <html lang="ja">
 <head>
 <meta charset="utf-8">
