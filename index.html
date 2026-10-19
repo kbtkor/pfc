@@ -35,7 +35,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .datebar div{flex:1;text-align:center;font-size:17px;font-weight:600}
 .srow{margin-bottom:12px}
 .srow:last-child{margin-bottom:0}
-.shead{display:flex;justify-content:space-between;font-size:15px}
+.shead{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
+.shead span{font-size:14px;color:var(--sub)}
+.shead .cv{font-size:24px;font-weight:700;color:var(--ink)}
 .pb{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 4px}
 .pb i{display:block;height:100%}
 .over{color:var(--err)}
@@ -301,7 +303,7 @@ function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
   var l=D.entries[cur]||[],t=tot(l),h="";
   KS.forEach(function(s){var g=D.goal[s[0]]||0,v=t[s[0]];
-    h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span>'+fmt(v)+(g?" / "+fmt(g):"")+" "+s[2]+'</span></div>';
+    h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+fmt(v)+'</b>'+(g?" / "+fmt(g):"")+" "+s[2]+'</span></div>';
     if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem'+(o?" over":"")+'">'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</div>'}
     h+='</div>'});
   if(!D.goal.k&&!D.goal.p&&!D.goal.f&&!D.goal.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
