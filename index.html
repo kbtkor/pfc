@@ -333,9 +333,18 @@ $("elist").addEventListener("click",function(e){
 $("dprev").onclick=function(){cur=shift(cur,-1);editE=null;rToday()};
 $("dnext").onclick=function(){cur=shift(cur,1);editE=null;rToday()};
 $("dlabel").onclick=function(){cur=ymd(new Date());editE=null;rToday()};
-function setGoals(){["k","p","f","c"].forEach(function(k){$("g"+k).value=D.goal[k]||""})}
+var gAuto=null;
+function gclr(){if(gAuto){var a=$("g"+gAuto);a.value="";a.classList.remove("auto");D.goal[gAuto]=0;gAuto=null}}
+function setGoals(){gAuto=null;["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.value=D.goal[k]||"";i.classList.remove("auto")})}
 setGoals();
-["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.addEventListener("input",function(){var n=num(i.value);D.goal[k]=n&&!isNaN(n)?n:0;save();rToday()})});
+["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.addEventListener("input",function(){
+  if(gAuto&&gAuto!==k)gclr();
+  if(gAuto===k){i.classList.remove("auto");gAuto=null}
+  var n=num(i.value);D.goal[k]=n&&!isNaN(n)?n:0;
+  var em=[],v={},bad=false;
+  ["p","f","c","k"].forEach(function(x){var m=num($("g"+x).value);if(m===null)em.push(x);else if(isNaN(m))bad=true;v[x]=m});
+  if(!bad&&em.length===1){var r=solve(v,em[0]);if(r>=0){r=Math.round(r*10)/10;$("g"+em[0]).value=fmt(r);$("g"+em[0]).classList.add("auto");D.goal[em[0]]=r;gAuto=em[0]}}
+  save();rToday()})});
 
 function rCal(){
   $("mlabel").textContent=vy+"年"+vm+"月";
