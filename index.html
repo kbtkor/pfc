@@ -26,6 +26,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
+.fi.auto{color:var(--sub);border-style:dashed}
 .rem{font-size:12px;color:var(--sub);line-height:1.6}
 .bad{font-size:13px;color:var(--err);line-height:1.6}
 .lead{color:var(--sub);font-size:14px;margin:4px 0 12px;line-height:1.6}
@@ -171,23 +172,53 @@ var sortE=false,sortM=false,editE=null,editM=null;
 function tot(l){var t={p:0,f:0,c:0,k:0};l.forEach(function(e){for(var k in t)t[k]+=e[k]});return t}
 function add(date,e){e.id=Date.now()+"_"+Math.floor(Math.random()*1e4);(D.entries[date]=D.entries[date]||[]).push(e);save()}
 function mv(arr,id,dir){var i=-1,j,t;arr.forEach(function(x,n){if(String(x.id)===id)i=n});j=i+dir;if(i<0||j<0||j>=arr.length)return false;t=arr[i];arr[i]=arr[j];arr[j]=t;return true}
+function solve(v,m){
+  if(m==="k")return v.p*4+v.f*9+v.c*4;
+  if(m==="p")return(v.k-v.f*9-v.c*4)/4;
+  if(m==="f")return(v.k-v.p*4-v.c*4)/9;
+  return(v.k-v.p*4-v.f*9)/4;
+}
 function form(e){
   return'<div class="item edit"><div class="n"><input class="fi" data-k="name" placeholder="名前" value="'+esc(e.name||"")+'">'
   +'<div class="eg"><label>たんぱく質(g)<input class="fi" data-k="p" inputmode="decimal" value="'+fmt(e.p)+'"></label>'
   +'<label>脂質(g)<input class="fi" data-k="f" inputmode="decimal" value="'+fmt(e.f)+'"></label>'
   +'<label>炭水化物(g)<input class="fi" data-k="c" inputmode="decimal" value="'+fmt(e.c)+'"></label>'
   +'<label>カロリー(kcal)<input class="fi" data-k="k" inputmode="decimal" value="'+fmt(e.k)+'"></label></div>'
-  +'<div class="rem">カロリーを空にして保存すると、P・F・Cから計算します。</div>'
+  +'<div class="rem">空欄が1つだけのとき、残りの1項目を自動で計算します。</div>'
   +'<div class="ea"><button data-save="'+e.id+'">保存</button><button data-cancel="1">キャンセル</button></div>'
   +'<div class="bad emsg"></div></div></div>';
 }
+function fv(box,k){return box.querySelector('[data-k="'+k+'"]')}
+function calcForm(box,from){
+  var a=box.dataset.auto;
+  if(a){
+    if(from!==a){var ai=fv(box,a);ai.value="";ai.classList.remove("auto")}
+    else{fv(box,a).classList.remove("auto")}
+    delete box.dataset.auto;
+  }
+  var em=[],v={},bad=false,msg=box.querySelector(".emsg");
+  msg.textContent="";
+  ["p","f","c","k"].forEach(function(k){var n=num(fv(box,k).value);if(n===null)em.push(k);else if(isNaN(n))bad=true;v[k]=n});
+  if(bad||em.length!==1)return;
+  var r=solve(v,em[0]);
+  if(r<0){msg.textContent="計算結果がマイナスになります。入力値を確認してください。";return}
+  var inp=fv(box,em[0]);inp.value=fmt(r);inp.classList.add("auto");box.dataset.auto=em[0];
+}
+function fchange(e){
+  var t=e.target,box=t.closest?t.closest(".edit"):null;
+  if(box&&t.dataset.k&&t.dataset.k!=="name")calcForm(box,t.dataset.k);
+}
 function readForm(box){
-  var o={name:box.querySelector('[data-k="name"]').value.trim()},bad=false;
-  ["p","f","c"].forEach(function(k){var n=num(box.querySelector('[data-k="'+k+'"]').value);if(n===null)n=0;if(isNaN(n))bad=true;o[k]=n});
-  var kn=num(box.querySelector('[data-k="k"]').value);
-  if(isNaN(kn))bad=true;
-  if(bad){box.querySelector(".emsg").textContent="数字(0以上)で入力してください。";return null}
-  o.k=kn===null?Math.round((o.p*4+o.f*9+o.c*4)*10)/10:kn;
+  var o={name:fv(box,"name").value.trim()},v={},em=[],bad=false,msg=box.querySelector(".emsg");
+  ["p","f","c","k"].forEach(function(k){var n=num(fv(box,k).value);if(n===null)em.push(k);else if(isNaN(n))bad=true;v[k]=n});
+  if(bad){msg.textContent="数字(0以上)で入力してください。";return null}
+  if(em.length>=2){msg.textContent="P・F・C・カロリーのうち、3つ以上を入力してください。";return null}
+  if(em.length===1){
+    var r=solve(v,em[0]);
+    if(r<0){msg.textContent="計算結果がマイナスになります。入力値を確認してください。";return null}
+    v[em[0]]=Math.round(r*10)/10;
+  }
+  o.p=v.p;o.f=v.f;o.c=v.c;o.k=v.k;
   return o;
 }
 
@@ -215,10 +246,7 @@ function calc(from){
     setMsg(Math.abs(d)<0.5?"4項目は一致しています。":"P・F・Cから計算すると "+fmt(t)+" kcal です(入力との差 "+(d>0?"+":"")+fmt(d)+" kcal)。",false);
     draw(v.p,v.f,v.c);return}
   var m=empty[0],r,name={p:"たんぱく質",f:"脂質",c:"炭水化物",k:"カロリー"}[m];
-  if(m==="k")r=v.p*4+v.f*9+v.c*4;
-  else if(m==="p")r=(v.k-v.f*9-v.c*4)/4;
-  else if(m==="f")r=(v.k-v.p*4-v.c*4)/9;
-  else r=(v.k-v.p*4-v.f*9)/4;
+  r=solve(v,m);
   if(r<0){setMsg("計算結果がマイナスになります。入力値がカロリーと合っているか確認してください。",true);return}
   el[m].value=fmt(r);el[m].classList.add("auto");auto=m;
   setMsg(name+"は "+fmt(r)+(m==="k"?" kcal":" g")+" です。",false);
@@ -282,6 +310,7 @@ function rToday(){
     return'<div class="item"><div class="n"><b>'+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「myリスト」から記録できます。</div>';
 }
 $("esort").onclick=function(){sortE=!sortE;editE=null;rToday()};
+$("elist").addEventListener("change",fchange);
 $("elist").addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
   var l=D.entries[cur]||[];
@@ -351,6 +380,7 @@ function rMy(){
     return'<div class="item"><div class="n"><b>'+esc(e.name)+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">myリストは空です。「計算」で4項目を入れて名前を付け、「myリストに登録」を押してください。</div>';
 }
 $("msort").onclick=function(){sortM=!sortM;editM=null;rMy()};
+$("mylist").addEventListener("change",fchange);
 $("mylist").addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
   var it;
