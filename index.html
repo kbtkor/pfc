@@ -102,7 +102,11 @@ summary{font-size:15px;font-weight:600}
 <label>たんぱく質(g)<input class="fi" id="gp" inputmode="decimal"></label>
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
 <label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
-</div></details>
+</div>
+<div class="rem" style="margin-top:8px">空欄が1つだけのとき、残りの1項目を自動で計算します。入力したあと「目標を保存」を押すと反映されます。</div>
+<button class="wide" id="gsave" type="button">目標を保存</button>
+<div id="gmsg" class="rem" style="margin-top:8px" aria-live="polite"></div>
+</details>
 <div class="card"><div class="lh"><b>記録</b><button id="esort" aria-pressed="false">並び替え</button></div><div id="elist"></div></div>
 </section>
 
@@ -333,18 +337,32 @@ $("elist").addEventListener("click",function(e){
 $("dprev").onclick=function(){cur=shift(cur,-1);editE=null;rToday()};
 $("dnext").onclick=function(){cur=shift(cur,1);editE=null;rToday()};
 $("dlabel").onclick=function(){cur=ymd(new Date());editE=null;rToday()};
+
 var gAuto=null;
-function gclr(){if(gAuto){var a=$("g"+gAuto);a.value="";a.classList.remove("auto");D.goal[gAuto]=0;gAuto=null}}
+function gm(t,e){var s=$("gmsg");s.textContent=t;s.className=e?"bad":"rem"}
+function gclr(){if(gAuto){var a=$("g"+gAuto);a.value="";a.classList.remove("auto");gAuto=null}}
 function setGoals(){gAuto=null;["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.value=D.goal[k]||"";i.classList.remove("auto")})}
 setGoals();
 ["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.addEventListener("input",function(){
+  gm("");
   if(gAuto&&gAuto!==k)gclr();
   if(gAuto===k){i.classList.remove("auto");gAuto=null}
-  var n=num(i.value);D.goal[k]=n&&!isNaN(n)?n:0;
   var em=[],v={},bad=false;
   ["p","f","c","k"].forEach(function(x){var m=num($("g"+x).value);if(m===null)em.push(x);else if(isNaN(m))bad=true;v[x]=m});
-  if(!bad&&em.length===1){var r=solve(v,em[0]);if(r>=0){r=Math.round(r*10)/10;$("g"+em[0]).value=fmt(r);$("g"+em[0]).classList.add("auto");D.goal[em[0]]=r;gAuto=em[0]}}
-  save();rToday()})});
+  if(bad||em.length!==1)return;
+  var r=solve(v,em[0]);
+  if(r<0){gm("計算結果がマイナスになります。入力値を確認してください。",1);return}
+  r=Math.round(r*10)/10;
+  var t=$("g"+em[0]);t.value=fmt(r);t.classList.add("auto");gAuto=em[0];
+})});
+$("gsave").onclick=function(){
+  var g={},bad=false;
+  ["k","p","f","c"].forEach(function(k){var n=num($("g"+k).value);if(n!==null&&isNaN(n))bad=true;g[k]=(n===null||isNaN(n))?0:n});
+  if(bad){gm("数字(0以上)で入力してください。",1);return}
+  D.goal=g;save();
+  ["k","p","f","c"].forEach(function(k){$("g"+k).classList.remove("auto")});gAuto=null;
+  rToday();gm("目標を保存しました。");
+};
 
 function rCal(){
   $("mlabel").textContent=vy+"年"+vm+"月";
