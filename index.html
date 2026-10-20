@@ -111,7 +111,6 @@ summary{font-size:15px;font-weight:600}
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
 <label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
 </div>
-<div class="rem" style="margin-top:8px">空欄が1つだけのとき、残りの1項目を自動で計算します。「目標を保存」を押すと、<span id="gdate"></span>以降の目標が変わります。それより前の日の目標は変わりません。</div>
 <button class="wide" id="gsave" type="button">目標を保存</button>
 <div id="gmsg" class="rem" style="margin-top:8px" aria-live="polite"></div>
 </details>
@@ -312,7 +311,6 @@ function dest(){$("dest").textContent=lab(cur)}
 var gShown=null;
 function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
-  $("gdate").textContent=lab(cur);
   if(gShown!==cur){setGoals();gShown=cur}
   var G=goalFor(cur);
   var l=D.entries[cur]||[],t=tot(l),h="";
