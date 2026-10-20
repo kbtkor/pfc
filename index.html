@@ -36,8 +36,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .srow{margin-bottom:12px}
 .srow:last-child{margin-bottom:0}
 .shead{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
-.shead span{font-size:14px;color:var(--sub);text-align:right}
-.shead .cv{font-size:24px;font-weight:700;color:var(--ink)}
+.shead span{font-size:14px;color:var(--sub);display:flex;align-items:baseline;justify-content:flex-end}
+.shead .cv{font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.shead .un{display:inline-block;width:2.8em;margin-left:4px;text-align:left;font-style:normal}
 .pb{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 4px}
 .pb i{display:block;height:100%}
 .frow{display:flex;justify-content:space-between;gap:8px}
@@ -169,6 +170,7 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
 function half(s){return String(s).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/[．]/g,".").replace(/[，]/g,",")}
 function num(s){s=half(s).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
 function fmt(n){return String(Math.round(n*10)/10)}
+function f1(n){return(Math.round(n*10)/10).toFixed(1)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function p2(n){return n<10?"0"+n:""+n}
 function ymd(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())}
@@ -305,7 +307,7 @@ function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
   var l=D.entries[cur]||[],t=tot(l),h="";
   KS.forEach(function(s){var g=D.goal[s[0]]||0,v=t[s[0]];
-    h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+fmt(v)+'</b> '+s[2]+'</span></div>';
+    h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+f1(v)+'</b><i class="un">'+s[2]+'</i></span></div>';
     if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(o?' class="over"':'')+'>'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</span><span>目標 '+fmt(g)+' '+s[2]+'</span></div>'}
     h+='</div>'});
   if(!D.goal.k&&!D.goal.p&&!D.goal.f&&!D.goal.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
