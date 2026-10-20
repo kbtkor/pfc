@@ -51,6 +51,9 @@ summary{font-size:15px;font-weight:600}
 .lh b{font-size:15px}
 .lh button{padding:6px 12px;font-size:14px}
 .lh button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.qrow{display:flex;gap:6px;margin-top:8px}
+.qrow button{flex:1;padding:10px 0;font-size:15px}
+.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .item{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 .item:first-child{border-top:0;padding-top:0}
 .item:last-child{padding-bottom:0}
@@ -154,7 +157,9 @@ summary{font-size:15px;font-weight:600}
 </section>
 
 <section id="t-my" hidden>
-<div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label><div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
+<div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
+<div class="qrow" id="mq"><button type="button" data-q="1.5" aria-pressed="false">1.5</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="0.5" aria-pressed="false">0.5</button></div>
+<div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
 <div class="card"><div class="lh"><b>myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
 </section>
 </main>
@@ -402,9 +407,19 @@ $("bin").onclick=function(){
   }catch(x){bm("読み込めませんでした。書き出した文字を、そのまま貼り付けてください。",1)}
 };
 
+function qsync(){
+  var m=num($("mult").value);
+  [].forEach.call(document.querySelectorAll("#mq button"),function(b){
+    b.setAttribute("aria-pressed",(m!==null&&!isNaN(m)&&Number(b.dataset.q)===m)?"true":"false");
+  });
+}
+$("mq").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$("mult").value=b.dataset.q;qsync()});
+$("mult").addEventListener("input",qsync);
+
 function rMy(){
   var l=D.my;
   $("mdest").textContent=lab(cur);
+  qsync();
   if(l.length<2)sortM=false;
   var sb=$("msort");sb.hidden=l.length<2;sb.textContent=sortM?"完了":"並び替え";sb.setAttribute("aria-pressed",sortM?"true":"false");
   $("mylist").innerHTML=l.length?l.map(function(e,i){
