@@ -29,7 +29,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .fi.auto{color:var(--sub);border-style:dashed}
 .rem{font-size:12px;color:var(--sub);line-height:1.6}
 .bad{font-size:13px;color:var(--err);line-height:1.6}
-.lead{color:var(--sub);font-size:14px;margin:4px 0 12px;line-height:1.6}
 .datebar{display:flex;align-items:center;gap:8px;margin:4px 0 12px}
 .datebar button{width:48px}
 .datebar div{flex:1;text-align:center;font-size:17px;font-weight:600}
@@ -118,7 +117,6 @@ summary{font-size:15px;font-weight:600}
 </section>
 
 <section id="t-calc" hidden>
-<p class="lead">4項目のうち、わかっている3つを入力してください。空欄の1つを自動で計算します。</p>
 <div class="card"><b style="font-size:15px;display:block;margin-bottom:8px">ラベルから読み取る</b>
 <textarea class="fi" id="scan" rows="3" placeholder="ここに栄養成分表示の文字を入れる" autocomplete="off"></textarea>
 <div id="scanmsg" aria-live="polite"></div></div>
@@ -199,7 +197,6 @@ function form(e){
   +'<label>脂質(g)<input class="fi" data-k="f" inputmode="decimal" value="'+fmt(e.f)+'"></label>'
   +'<label>炭水化物(g)<input class="fi" data-k="c" inputmode="decimal" value="'+fmt(e.c)+'"></label>'
   +'<label>カロリー(kcal)<input class="fi" data-k="k" inputmode="decimal" value="'+fmt(e.k)+'"></label></div>'
-  +'<div class="rem">空欄が1つだけのとき、残りの1項目を自動で計算します。</div>'
   +'<div class="ea"><button data-save="'+e.id+'">保存</button><button data-cancel="1">キャンセル</button></div>'
   +'<div class="bad emsg"></div></div></div>';
 }
