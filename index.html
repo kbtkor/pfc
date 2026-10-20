@@ -111,7 +111,7 @@ summary{font-size:15px;font-weight:600}
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
 <label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
 </div>
-<div class="rem" style="margin-top:8px">空欄が1つだけのとき、残りの1項目を自動で計算します。入力したあと「目標を保存」を押すと反映されます。</div>
+<div class="rem" style="margin-top:8px">空欄が1つだけのとき、残りの1項目を自動で計算します。「目標を保存」を押すと、<span id="gdate"></span>以降の目標が変わります。それより前の日の目標は変わりません。</div>
 <button class="wide" id="gsave" type="button">目標を保存</button>
 <div id="gmsg" class="rem" style="margin-top:8px" aria-live="polite"></div>
 </details>
@@ -167,7 +167,7 @@ summary{font-size:15px;font-weight:600}
 (function(){
 function $(i){return document.getElementById(i)}
 var KEY="claude_pfc_v1";
-function fix(d){d.goal=d.goal||{};d.entries=d.entries||{};d.my=d.my||[];return d}
+function fix(d){d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];return d}
 function load(){try{var s=localStorage.getItem(KEY);if(s){var d=JSON.parse(s);if(d&&typeof d==="object")return fix(d)}}catch(e){}return fix({})}
 var D=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(x){$("warn").hidden=false}}
@@ -184,6 +184,7 @@ function lab(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);return(+a[1])
 var cur=ymd(new Date());
 var vy=+cur.slice(0,4),vm=+cur.slice(5,7);
 var sortE=false,sortM=false,editE=null,editM=null;
+function goalFor(d){var best=null,k;for(k in D.goalHist){if(k<=d&&(best===null||k>best))best=k}return best===null?D.goal:D.goalHist[best]}
 function tot(l){var t={p:0,f:0,c:0,k:0};l.forEach(function(e){for(var k in t)t[k]+=e[k]});return t}
 function add(date,e){e.id=Date.now()+"_"+Math.floor(Math.random()*1e4);(D.entries[date]=D.entries[date]||[]).push(e);save()}
 function mv(arr,id,dir){var i=-1,j,t;arr.forEach(function(x,n){if(String(x.id)===id)i=n});j=i+dir;if(i<0||j<0||j>=arr.length)return false;t=arr[i];arr[i]=arr[j];arr[j]=t;return true}
@@ -308,14 +309,18 @@ $("addmy").onclick=function(){
 
 var KS=[["k","カロリー","kcal","--k"],["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"]];
 function dest(){$("dest").textContent=lab(cur)}
+var gShown=null;
 function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
+  $("gdate").textContent=lab(cur);
+  if(gShown!==cur){setGoals();gShown=cur}
+  var G=goalFor(cur);
   var l=D.entries[cur]||[],t=tot(l),h="";
-  KS.forEach(function(s){var g=D.goal[s[0]]||0,v=t[s[0]];
+  KS.forEach(function(s){var g=G[s[0]]||0,v=t[s[0]];
     h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+f1(v)+'</b><i class="un">'+s[2]+'</i></span></div>';
     if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(o?' class="over"':'')+'>'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</span><span>目標 '+fmt(g)+' '+s[2]+'</span></div>'}
     h+='</div>'});
-  if(!D.goal.k&&!D.goal.p&&!D.goal.f&&!D.goal.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
+  if(!G.k&&!G.p&&!G.f&&!G.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
   $("sum").innerHTML=h;
   if(l.length<2)sortE=false;
   var sb=$("esort");sb.hidden=l.length<2;sb.textContent=sortE?"完了":"並び替え";sb.setAttribute("aria-pressed",sortE?"true":"false");
@@ -352,8 +357,7 @@ $("dlabel").onclick=function(){cur=ymd(new Date());editE=null;rToday()};
 var gAuto=null;
 function gm(t,e){var s=$("gmsg");s.textContent=t;s.className=e?"bad":"rem"}
 function gclr(){if(gAuto){var a=$("g"+gAuto);a.value="";a.classList.remove("auto");gAuto=null}}
-function setGoals(){gAuto=null;["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.value=D.goal[k]||"";i.classList.remove("auto")})}
-setGoals();
+function setGoals(){gAuto=null;gm("");var G=goalFor(cur);["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.value=G[k]||"";i.classList.remove("auto")})}
 ["k","p","f","c"].forEach(function(k){var i=$("g"+k);i.addEventListener("input",function(){
   gm("");
   if(gAuto&&gAuto!==k)gclr();
@@ -370,9 +374,9 @@ $("gsave").onclick=function(){
   var g={},bad=false;
   ["k","p","f","c"].forEach(function(k){var n=num($("g"+k).value);if(n!==null&&isNaN(n))bad=true;g[k]=(n===null||isNaN(n))?0:n});
   if(bad){gm("数字(0以上)で入力してください。",1);return}
-  D.goal=g;save();
+  D.goalHist[cur]=g;save();
   ["k","p","f","c"].forEach(function(k){$("g"+k).classList.remove("auto")});gAuto=null;
-  rToday();gm("目標を保存しました。");
+  rToday();gm(lab(cur)+"以降の目標を保存しました。");
 };
 
 function rCal(){
@@ -401,9 +405,9 @@ $("bin").onclick=function(){
   if(!s){bm("復元したい文字を、枠に貼り付けてください。",1);return}
   try{
     var o=JSON.parse(s);
-    if(!o||typeof o!=="object"||(!o.entries&&!o.my&&!o.goal))throw 0;
+    if(!o||typeof o!=="object"||(!o.entries&&!o.my&&!o.goal&&!o.goalHist))throw 0;
     if(!confirm("今のデータを、貼り付けた内容で置き換えます。よろしいですか?"))return;
-    D=fix(o);save();setGoals();rCal();bm("復元しました。");
+    D=fix(o);save();gShown=null;rCal();bm("復元しました。");
   }catch(x){bm("読み込めませんでした。書き出した文字を、そのまま貼り付けてください。",1)}
 };
 
