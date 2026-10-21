@@ -43,11 +43,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .frow{display:flex;justify-content:space-between;gap:8px}
 .frow span:last-child{text-align:right}
 .over{color:var(--err)}
-.cg{display:grid;grid-template-columns:3.6em repeat(4,1fr);gap:8px 4px;font-size:14px;margin-top:10px;align-items:baseline}
+.cg{display:grid;grid-template-columns:4.6em repeat(4,1fr);gap:8px 4px;font-size:14px;margin-top:10px;align-items:baseline}
 .cg span{text-align:right;font-variant-numeric:tabular-nums}
 .cg span:nth-child(5n+1){text-align:left}
 .cg .h{font-size:12px;color:var(--sub)}
 .cg .l{font-weight:600}
+.cg .tag{font-size:13px;color:var(--ink);padding:2px 8px;margin-right:0;vertical-align:baseline}
 .tag{font-style:normal;font-size:11px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-right:6px;color:var(--sub);vertical-align:1px}
 .tag[data-c="朝食"]{border-color:var(--p)}
 .tag[data-c="昼食"]{border-color:var(--c)}
@@ -351,7 +352,7 @@ function catHtml(l){
     if(!sub.length)return;
     var t=tot(sub);
     if(!any){h+='<span class="h"></span><span class="h">kcal</span><span class="h">P</span><span class="h">F</span><span class="h">C</span>';any=true}
-    h+='<span class="l">'+(c||"未分類")+'</span><span>'+f1(t.k)+'</span><span>'+f1(t.p)+'</span><span>'+f1(t.f)+'</span><span>'+f1(t.c)+'</span>';
+    h+='<span class="l"><i class="tag" data-c="'+esc(c)+'">'+(c||"未分類")+'</i></span><span>'+f1(t.k)+'</span><span>'+f1(t.p)+'</span><span>'+f1(t.f)+'</span><span>'+f1(t.c)+'</span>';
   });
   return any?'<b style="font-size:15px">分類別</b><div class="cg">'+h+'</div>':"";
 }
