@@ -20,7 +20,7 @@ h1{font-size:20px;margin:4px 0 0}
 #tabs{display:flex;gap:6px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 0;z-index:5}
 button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
 button:disabled{opacity:.3}
-button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #tabs button{flex:1;padding:10px 2px;font-size:14px}
 #tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
@@ -43,6 +43,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .frow{display:flex;justify-content:space-between;gap:8px}
 .frow span:last-child{text-align:right}
 .over{color:var(--err)}
+.cg{display:grid;grid-template-columns:3.6em repeat(4,1fr);gap:8px 4px;font-size:14px;margin-top:10px;align-items:baseline}
+.cg span{text-align:right;font-variant-numeric:tabular-nums}
+.cg span:nth-child(5n+1){text-align:left}
+.cg .h{font-size:12px;color:var(--sub)}
+.cg .l{font-weight:600}
+.tag{font-style:normal;font-size:11px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-right:6px;color:var(--sub);vertical-align:1px}
 summary{font-size:15px;font-weight:600}
 .gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:13px;color:var(--sub)}
 .gg input{margin-top:4px}
@@ -97,12 +103,13 @@ summary{font-size:15px;font-weight:600}
 <body>
 <main>
 <h1>Claude PFC</h1>
-<nav id="tabs"><button data-t="today">記録</button><button data-t="calc">計算</button><button data-t="hist">カレンダー</button><button data-t="my">myリスト</button></nav>
+<nav id="tabs"><button data-t="today">ホーム</button><button data-t="calc">計算</button><button data-t="hist">カレンダー</button><button data-t="my">myリスト</button></nav>
 <div id="warn" class="bad" hidden>この環境では記録を保存できません(プライベートブラウズ中など)。</div>
 
 <section id="t-today">
 <div class="datebar"><button id="dprev" aria-label="前の日">‹</button><div id="dlabel"></div><button id="dnext" aria-label="次の日">›</button></div>
 <div class="card" id="sum"></div>
+<div class="card" id="cats" hidden></div>
 <details class="card"><summary>目標を設定</summary>
 <div class="gg">
 <label>カロリー(kcal)<input class="fi" id="gk" inputmode="decimal"></label>
@@ -130,6 +137,7 @@ summary{font-size:15px;font-weight:600}
 <div class="card" style="margin-top:16px">
 <div class="rem" style="margin-bottom:8px">記録先: <span id="dest"></span></div>
 <input class="fi" id="ename" placeholder="名前(例: 朝食、プロテイン)" autocomplete="off">
+<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="間食" aria-pressed="false">間食</button></div>
 <button class="wide" id="addlog">この日に記録</button>
 <button class="wide" id="addmy">myリストに登録</button>
 <div id="savemsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
@@ -156,6 +164,7 @@ summary{font-size:15px;font-weight:600}
 <section id="t-my" hidden>
 <div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
 <div class="qrow" id="mq"><button type="button" data-q="1.5" aria-pressed="false">1.5</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="0.5" aria-pressed="false">0.5</button></div>
+<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="間食" aria-pressed="false">間食</button></div>
 <div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
 <div class="card"><div class="lh"><b>myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
 </section>
@@ -164,6 +173,7 @@ summary{font-size:15px;font-weight:600}
 (function(){
 function $(i){return document.getElementById(i)}
 var KEY="claude_pfc_v1";
+var CATS=["朝食","昼食","夕食","間食"];
 function fix(d){d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];return d}
 function load(){try{var s=localStorage.getItem(KEY);if(s){var d=JSON.parse(s);if(d&&typeof d==="object")return fix(d)}}catch(e){}return fix({})}
 var D=load();
@@ -181,6 +191,7 @@ function lab(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);return(+a[1])
 var cur=ymd(new Date());
 var vy=+cur.slice(0,4),vm=+cur.slice(5,7);
 var sortE=false,sortM=false,editE=null,editM=null;
+var cat="";
 function goalFor(d){var best=null,k;for(k in D.goalHist){if(k<=d&&(best===null||k>best))best=k}return best===null?D.goal:D.goalHist[best]}
 function tot(l){var t={p:0,f:0,c:0,k:0};l.forEach(function(e){for(var k in t)t[k]+=e[k]});return t}
 function add(date,e){e.id=Date.now()+"_"+Math.floor(Math.random()*1e4);(D.entries[date]=D.entries[date]||[]).push(e);save()}
@@ -191,8 +202,13 @@ function solve(v,m){
   if(m==="f")return(v.k-v.p*4-v.c*4)/9;
   return(v.k-v.p*4-v.f*9)/4;
 }
-function form(e){
-  return'<div class="item edit"><div class="n"><input class="fi" data-k="name" placeholder="名前" value="'+esc(e.name||"")+'">'
+function form(e,isRec){
+  var sel="";
+  if(isRec){
+    sel='<select class="fi" data-k="cat" style="margin-top:8px"><option value="">未分類</option>'
+    +CATS.map(function(c){return'<option value="'+c+'"'+(e.cat===c?" selected":"")+'>'+c+'</option>'}).join("")+'</select>';
+  }
+  return'<div class="item edit"><div class="n"><input class="fi" data-k="name" placeholder="名前" value="'+esc(e.name||"")+'">'+sel
   +'<div class="eg"><label>たんぱく質(g)<input class="fi" data-k="p" inputmode="decimal" value="'+fmt(e.p)+'"></label>'
   +'<label>脂質(g)<input class="fi" data-k="f" inputmode="decimal" value="'+fmt(e.f)+'"></label>'
   +'<label>炭水化物(g)<input class="fi" data-k="c" inputmode="decimal" value="'+fmt(e.c)+'"></label>'
@@ -218,10 +234,11 @@ function calcForm(box,from){
 }
 function fchange(e){
   var t=e.target,box=t.closest?t.closest(".edit"):null;
-  if(box&&t.dataset.k&&t.dataset.k!=="name")calcForm(box,t.dataset.k);
+  if(box&&t.dataset.k&&t.dataset.k!=="name"&&t.dataset.k!=="cat")calcForm(box,t.dataset.k);
 }
 function readForm(box){
   var o={name:fv(box,"name").value.trim()},v={},em=[],bad=false,msg=box.querySelector(".emsg");
+  var ce=fv(box,"cat");if(ce)o.cat=ce.value;
   ["p","f","c","k"].forEach(function(k){var n=num(fv(box,k).value);if(n===null)em.push(k);else if(isNaN(n))bad=true;v[k]=n});
   if(bad){msg.textContent="数字(0以上)で入力してください。";return null}
   if(em.length>=2){msg.textContent="P・F・C・カロリーのうち、3つ以上を入力してください。";return null}
@@ -289,13 +306,21 @@ function parse(){
 scan.addEventListener("input",parse);
 ids.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
 function clr(){ids.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""}
-$("clear").onclick=function(){clr();$("ename").value="";sm("")};
+function csync(){
+  [].forEach.call(document.querySelectorAll(".crow button"),function(b){
+    b.setAttribute("aria-pressed",b.dataset.c===cat?"true":"false");
+  });
+}
+[].forEach.call(document.querySelectorAll(".crow"),function(row){
+  row.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;cat=(cat===b.dataset.c)?"":b.dataset.c;csync()});
+});
+$("clear").onclick=function(){clr();$("ename").value="";cat="";csync();sm("")};
 
 function sm(t,e){var s=$("savemsg");s.textContent=t;s.className=e?"bad":"rem"}
 function vals(){var v={};for(var i=0;i<4;i++){var n=num(el[ids[i]].value);if(n===null||isNaN(n))return null;v[ids[i]]=n}return v}
 $("addlog").onclick=function(){
   var v=vals();if(!v){sm("P・F・C・カロリーの4項目がそろうと記録できます。",1);return}
-  v.name=$("ename").value.trim();add(cur,v);$("ename").value="";clr();sm(lab(cur)+"に記録しました。「記録」で確認できます。");
+  v.name=$("ename").value.trim();if(cat)v.cat=cat;add(cur,v);$("ename").value="";clr();sm(lab(cur)+"に記録しました。「ホーム」で確認できます。");
 };
 $("addmy").onclick=function(){
   var v=vals(),nm=$("ename").value.trim();
@@ -305,6 +330,17 @@ $("addmy").onclick=function(){
 
 var KS=[["k","カロリー","kcal","--k"],["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"]];
 function dest(){$("dest").textContent=lab(cur)}
+function catHtml(l){
+  var h="",any=false;
+  CATS.concat([""]).forEach(function(c){
+    var sub=l.filter(function(e){return(e.cat||"")===c});
+    if(!sub.length)return;
+    var t=tot(sub);
+    if(!any){h+='<span class="h"></span><span class="h">kcal</span><span class="h">P</span><span class="h">F</span><span class="h">C</span>';any=true}
+    h+='<span class="l">'+(c||"未分類")+'</span><span>'+f1(t.k)+'</span><span>'+f1(t.p)+'</span><span>'+f1(t.f)+'</span><span>'+f1(t.c)+'</span>';
+  });
+  return any?'<b style="font-size:15px">分類別</b><div class="cg">'+h+'</div>':"";
+}
 var gShown=null;
 function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
@@ -317,12 +353,13 @@ function rToday(){
     h+='</div>'});
   if(!G.k&&!G.p&&!G.f&&!G.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
   $("sum").innerHTML=h;
+  var ch=catHtml(l),cb=$("cats");cb.innerHTML=ch;cb.hidden=!ch;
   if(l.length<2)sortE=false;
   var sb=$("esort");sb.hidden=l.length<2;sb.textContent=sortE?"完了":"並び替え";sb.setAttribute("aria-pressed",sortE?"true":"false");
   $("elist").innerHTML=l.length?l.map(function(e,i){
-    if(editE===String(e.id))return form(e);
+    if(editE===String(e.id))return form(e,true);
     var b=sortE?'<button class="mv" data-up="'+e.id+'" aria-label="上へ"'+(i===0?" disabled":"")+'>↑</button><button class="mv" data-dn="'+e.id+'" aria-label="下へ"'+(i===l.length-1?" disabled":"")+'>↓</button>':'<button data-edit="'+e.id+'">編集</button><button data-del="'+e.id+'">削除</button>';
-    return'<div class="item"><div class="n"><b>'+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「myリスト」から記録できます。</div>';
+    return'<div class="item"><div class="n"><b>'+(e.cat?'<i class="tag">'+esc(e.cat)+'</i>':'')+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「myリスト」から記録できます。</div>';
 }
 $("esort").onclick=function(){sortE=!sortE;editE=null;rToday()};
 $("elist").addEventListener("change",fchange);
@@ -338,7 +375,7 @@ $("elist").addEventListener("click",function(e){
   if(b.dataset.cancel){editE=null;rToday();return}
   if(b.dataset.save){
     var o=readForm(b.closest(".edit"));if(!o)return;
-    l.forEach(function(x){if(String(x.id)===b.dataset.save){x.name=o.name;x.p=o.p;x.f=o.f;x.c=o.c;x.k=o.k}});
+    l.forEach(function(x){if(String(x.id)===b.dataset.save){x.name=o.name;x.p=o.p;x.f=o.f;x.c=o.c;x.k=o.k;if(o.cat)x.cat=o.cat;else delete x.cat}});
     save();editE=null;rToday();return;
   }
   if(b.dataset.up||b.dataset.dn){
@@ -418,11 +455,11 @@ $("mult").addEventListener("input",qsync);
 function rMy(){
   var l=D.my;
   $("mdest").textContent=lab(cur);
-  qsync();
+  qsync();csync();
   if(l.length<2)sortM=false;
   var sb=$("msort");sb.hidden=l.length<2;sb.textContent=sortM?"完了":"並び替え";sb.setAttribute("aria-pressed",sortM?"true":"false");
   $("mylist").innerHTML=l.length?l.map(function(e,i){
-    if(editM===String(e.id))return form(e);
+    if(editM===String(e.id))return form(e,false);
     var b=sortM?'<button class="mv" data-up="'+e.id+'" aria-label="上へ"'+(i===0?" disabled":"")+'>↑</button><button class="mv" data-dn="'+e.id+'" aria-label="下へ"'+(i===l.length-1?" disabled":"")+'>↓</button>':'<button data-use="'+e.id+'">記録</button><button data-edit="'+e.id+'">編集</button><button data-mdel="'+e.id+'">削除</button>';
     return'<div class="item"><div class="n"><b>'+esc(e.name)+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">myリストは空です。「計算」で4項目を入れて名前を付け、「myリストに登録」を押してください。</div>';
 }
@@ -435,7 +472,9 @@ $("mylist").addEventListener("click",function(e){
     D.my.forEach(function(y){if(String(y.id)===b.dataset.use)it=y});if(!it)return;
     var m=num($("mult").value);if(!m||isNaN(m))m=1;
     var r=function(v){return Math.round(v*m*10)/10};
-    add(cur,{name:it.name+(m!==1?" ×"+m:""),p:r(it.p),f:r(it.f),c:r(it.c),k:r(it.k)});
+    var ne={name:it.name+(m!==1?" ×"+m:""),p:r(it.p),f:r(it.f),c:r(it.c),k:r(it.k)};
+    if(cat)ne.cat=cat;
+    add(cur,ne);
     $("mymsg").textContent=lab(cur)+"に記録しました。";
   }else if(b.dataset.mdel){
     if(confirm("myリストから削除しますか?")){D.my=D.my.filter(function(y){return String(y.id)!==b.dataset.mdel});save();rMy()}
