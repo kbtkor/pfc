@@ -7,10 +7,10 @@
 <meta name="apple-mobile-web-app-title" content="Claude PFC">
 <title>Claude PFC</title>
 <style>
-:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--k:#1c2420;--err:#c0392b;
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--o:#e8662a;--k:#1c2420;--err:#c0392b;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}}
-:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--k:#eef2ef;--err:#ff7b6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
@@ -49,6 +49,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .cg .h{font-size:12px;color:var(--sub)}
 .cg .l{font-weight:600}
 .tag{font-style:normal;font-size:11px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-right:6px;color:var(--sub);vertical-align:1px}
+.tag[data-c="朝食"]{border-color:var(--p)}
+.tag[data-c="昼食"]{border-color:var(--c)}
+.tag[data-c="夕食"]{border-color:var(--f)}
+.tag[data-c="補食"]{border-color:var(--o)}
 summary{font-size:15px;font-weight:600}
 .gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:13px;color:var(--sub)}
 .gg input{margin-top:4px}
@@ -59,6 +63,12 @@ summary{font-size:15px;font-weight:600}
 .qrow{display:flex;gap:6px;margin-top:8px}
 .qrow button{flex:1;padding:10px 0;font-size:15px}
 .qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.crow button[data-c="朝食"]{--cc:var(--p)}
+.crow button[data-c="昼食"]{--cc:var(--c)}
+.crow button[data-c="夕食"]{--cc:var(--f)}
+.crow button[data-c="補食"]{--cc:var(--o)}
+.crow button{border-color:var(--cc,var(--line))}
+.crow button[aria-pressed="true"]{background:var(--cc,var(--ink));border-color:var(--cc,var(--ink))}
 .item{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 .item:first-child{border-top:0;padding-top:0}
 .item:last-child{padding-bottom:0}
@@ -137,7 +147,7 @@ summary{font-size:15px;font-weight:600}
 <div class="card" style="margin-top:16px">
 <div class="rem" style="margin-bottom:8px">記録先: <span id="dest"></span></div>
 <input class="fi" id="ename" placeholder="名前(例: 朝食、プロテイン)" autocomplete="off">
-<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="間食" aria-pressed="false">間食</button></div>
+<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <button class="wide" id="addlog">この日に記録</button>
 <button class="wide" id="addmy">myリストに登録</button>
 <div id="savemsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
@@ -164,7 +174,7 @@ summary{font-size:15px;font-weight:600}
 <section id="t-my" hidden>
 <div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
 <div class="qrow" id="mq"><button type="button" data-q="1.5" aria-pressed="false">1.5</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="0.5" aria-pressed="false">0.5</button></div>
-<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="間食" aria-pressed="false">間食</button></div>
+<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
 <div class="card"><div class="lh"><b>myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
 </section>
@@ -173,8 +183,12 @@ summary{font-size:15px;font-weight:600}
 (function(){
 function $(i){return document.getElementById(i)}
 var KEY="claude_pfc_v1";
-var CATS=["朝食","昼食","夕食","間食"];
-function fix(d){d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];return d}
+var CATS=["朝食","昼食","夕食","補食"];
+function fix(d){
+  d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];
+  Object.keys(d.entries).forEach(function(k){(d.entries[k]||[]).forEach(function(e){if(e.cat==="間食")e.cat="補食"})});
+  return d;
+}
 function load(){try{var s=localStorage.getItem(KEY);if(s){var d=JSON.parse(s);if(d&&typeof d==="object")return fix(d)}}catch(e){}return fix({})}
 var D=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(x){$("warn").hidden=false}}
@@ -359,7 +373,7 @@ function rToday(){
   $("elist").innerHTML=l.length?l.map(function(e,i){
     if(editE===String(e.id))return form(e,true);
     var b=sortE?'<button class="mv" data-up="'+e.id+'" aria-label="上へ"'+(i===0?" disabled":"")+'>↑</button><button class="mv" data-dn="'+e.id+'" aria-label="下へ"'+(i===l.length-1?" disabled":"")+'>↓</button>':'<button data-edit="'+e.id+'">編集</button><button data-del="'+e.id+'">削除</button>';
-    return'<div class="item"><div class="n"><b>'+(e.cat?'<i class="tag">'+esc(e.cat)+'</i>':'')+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「myリスト」から記録できます。</div>';
+    return'<div class="item"><div class="n"><b>'+(e.cat?'<i class="tag" data-c="'+esc(e.cat)+'">'+esc(e.cat)+'</i>':'')+esc(e.name||"名称なし")+'</b><span>P '+fmt(e.p)+" / F "+fmt(e.f)+" / C "+fmt(e.c)+" / "+fmt(e.k)+' kcal</span></div>'+b+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「myリスト」から記録できます。</div>';
 }
 $("esort").onclick=function(){sortE=!sortE;editE=null;rToday()};
 $("elist").addEventListener("change",fchange);
