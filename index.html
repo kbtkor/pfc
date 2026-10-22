@@ -37,16 +37,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .shead{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
 .shead span{font-size:14px;color:var(--sub);display:flex;align-items:baseline;justify-content:flex-end}
 .shead .cv{font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.shead .un{display:inline-block;width:2.8em;margin-left:4px;text-align:left;font-style:normal}
+.un{display:inline-block;width:40px;margin-left:4px;text-align:left;font-style:normal}
 .pb{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 4px}
 .pb i{display:block;height:100%}
 .frow{display:flex;justify-content:space-between;gap:8px}
-.frow span:last-child{text-align:right}
+.frow .tg{display:flex;align-items:baseline;justify-content:flex-end}
 .over{color:var(--err)}
-.cg{display:grid;grid-template-columns:4.6em repeat(4,1fr);gap:8px 4px;font-size:14px;margin-top:10px;align-items:baseline}
-.cg span{text-align:right;font-variant-numeric:tabular-nums}
-.cg span:nth-child(5n+1){text-align:left}
+.cg{display:grid;grid-template-columns:4.6em repeat(4,minmax(0,1fr) 1.1em);gap:8px 0;font-size:14px;margin-top:10px;align-items:baseline;font-variant-numeric:tabular-nums}
+.cg .i{text-align:right}
+.cg .d{text-align:left}
 .cg .h{font-size:12px;color:var(--sub)}
+.cg .h.k{margin-right:-.3em}
 .cg .l{font-weight:600}
 .cg .tag{font-size:13px;color:var(--ink);padding:2px 8px;margin-right:0;vertical-align:baseline}
 .tag{font-style:normal;font-size:11px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-right:6px;color:var(--sub);vertical-align:1px}
@@ -92,11 +93,15 @@ summary{font-size:15px;font-weight:600}
 .row input.auto{color:var(--sub);border-bottom-style:dashed}
 .row .u{color:var(--sub);font-size:14px;width:34px}
 .p{border-left-color:var(--p)}.f{border-left-color:var(--f)}.c{border-left-color:var(--c)}.k{border-left-color:var(--k)}
-#msg{min-height:48px;margin:14px 2px;font-size:15px;line-height:1.6}
+#msg{margin:10px 2px;font-size:15px;line-height:1.6}
+#msg:empty{display:none}
 #msg.err{color:var(--err)}
 #bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);margin:6px 0 8px}
+#bar:empty{display:none}
 #bar i{display:block;height:100%}
-#ratio{font-size:13px;color:var(--sub)}
+#ratio{font-size:13px;color:var(--sub);margin-bottom:10px}
+#ratio:empty{display:none}
+#calcdest{margin-top:6px}
 #scanmsg{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px;min-height:20px}
 #scanmsg.err{color:var(--err)}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
@@ -145,7 +150,7 @@ summary{font-size:15px;font-weight:600}
 <div id="msg" aria-live="polite"></div>
 <div id="bar"></div>
 <div id="ratio"></div>
-<div class="card" style="margin-top:16px">
+<div class="card" id="calcdest">
 <div class="rem" style="margin-bottom:8px">記録先: <span id="dest"></span></div>
 <input class="fi" id="ename" placeholder="名前(例: 朝食、プロテイン)" autocomplete="off">
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
@@ -158,7 +163,7 @@ summary{font-size:15px;font-weight:600}
 <section id="t-hist" hidden>
 <div class="card">
 <div class="datebar" style="margin-top:0"><button id="mprev" aria-label="前の月">‹</button><div id="mlabel"></div><button id="mnext" aria-label="次の月">›</button></div>
-<div class="cal"><div class="dow">月</div><div class="dow">火</div><div class="dow">水</div><div class="dow">木</div><div class="dow">金</div><div class="dow">土</div><div class="dow">日</div></div>
+<div class="cal"><div class="dow">日</div><div class="dow">月</div><div class="dow">火</div><div class="dow">水</div><div class="dow">木</div><div class="dow">金</div><div class="dow">土</div></div>
 <div class="cal" id="cal"></div>
 <div class="rem" style="margin-top:10px">点のある日は記録済みです。日付をタップすると、その日の記録を見たり、記録を追加したりできます。</div>
 <button class="wide" id="mtoday" type="button">今日を選ぶ</button>
@@ -343,16 +348,17 @@ $("addmy").onclick=function(){
   v.name=nm;v.id=Date.now()+"_"+Math.floor(Math.random()*1e4);D.my.push(v);save();$("ename").value="";sm("myリストに登録しました。");
 };
 
-var KS=[["k","カロリー","kcal","--k"],["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"]];
+var KS=[["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"],["k","カロリー","kcal","--k"]];
 function dest(){$("dest").textContent=lab(cur)}
+function nm(v){var s=f1(v),i=s.indexOf(".");return'<span class="i">'+s.slice(0,i)+'</span><span class="d">'+s.slice(i)+'</span>'}
 function catHtml(l){
   var h="",any=false;
   CATS.concat([""]).forEach(function(c){
     var sub=l.filter(function(e){return(e.cat||"")===c});
     if(!sub.length)return;
     var t=tot(sub);
-    if(!any){h+='<span class="h"></span><span class="h">kcal</span><span class="h">P</span><span class="h">F</span><span class="h">C</span>';any=true}
-    h+='<span class="l"><i class="tag" data-c="'+esc(c)+'">'+(c||"未分類")+'</i></span><span>'+f1(t.k)+'</span><span>'+f1(t.p)+'</span><span>'+f1(t.f)+'</span><span>'+f1(t.c)+'</span>';
+    if(!any){h+='<span class="h"></span><span class="h i k">kcal</span><span class="h"></span><span class="h i">P</span><span class="h"></span><span class="h i">F</span><span class="h"></span><span class="h i">C</span><span class="h"></span>';any=true}
+    h+='<span class="l"><i class="tag" data-c="'+esc(c)+'">'+(c||"未分類")+'</i></span>'+nm(t.k)+nm(t.p)+nm(t.f)+nm(t.c);
   });
   return any?'<b style="font-size:15px">分類別</b><div class="cg">'+h+'</div>':"";
 }
@@ -364,7 +370,7 @@ function rToday(){
   var l=D.entries[cur]||[],t=tot(l),h="";
   KS.forEach(function(s){var g=G[s[0]]||0,v=t[s[0]];
     h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+f1(v)+'</b><i class="un">'+s[2]+'</i></span></div>';
-    if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(o?' class="over"':'')+'>'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</span><span>目標 '+fmt(g)+' '+s[2]+'</span></div>'}
+    if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(o?' class="over"':'')+'>'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</span><span class="tg"><span>目標 '+fmt(g)+'</span><i class="un">'+s[2]+'</i></span></div>'}
     h+='</div>'});
   if(!G.k&&!G.p&&!G.f&&!G.c)h+='<div class="rem">「目標を設定」を開くと、残りが表示されます。</div>';
   $("sum").innerHTML=h;
@@ -428,7 +434,7 @@ $("gsave").onclick=function(){
 
 function rCal(){
   $("mlabel").textContent=vy+"年"+vm+"月";
-  var off=(new Date(vy,vm-1,1).getDay()+6)%7;
+  var off=new Date(vy,vm-1,1).getDay();
   var rows=Math.ceil((off+new Date(vy,vm,0).getDate())/7);
   var today=ymd(new Date()),h="",i,d,s,has;
   for(i=0;i<rows*7;i++){
