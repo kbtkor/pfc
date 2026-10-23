@@ -149,6 +149,8 @@ summary{font-size:15px;font-weight:600}
 <div class="row f"><label for="f">脂質 (F)</label><input id="f" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
 <div class="row c"><label for="c">炭水化物 (C)</label><input id="c" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
 <div class="row k"><label for="k">カロリー<small>P×4 + F×9 + C×4</small></label><input id="k" type="text" inputmode="decimal" autocomplete="off"><span class="u">kcal</span></div>
+<div class="card"><label class="rem">記録する量(倍)<input class="fi" id="cmult" value="1" inputmode="decimal"></label>
+<div class="qrow" id="cmq"><button type="button" data-q="0.5" aria-pressed="false">0.5</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1.5" aria-pressed="false">1.5</button></div></div>
 <div id="msg" aria-live="polite"></div>
 <div id="bar"></div>
 <div id="ratio"></div>
@@ -364,13 +366,31 @@ function csync(){
 [].forEach.call(document.querySelectorAll(".crow"),function(row){
   row.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;cat=(cat===b.dataset.c)?"":b.dataset.c;csync()});
 });
-$("clear").onclick=function(){clr();$("ename").value="";cat="";csync();sm("")};
+function qs(inp,row){
+  var m=num($(inp).value);
+  [].forEach.call(document.querySelectorAll("#"+row+" button"),function(b){
+    b.setAttribute("aria-pressed",(m!==null&&!isNaN(m)&&Number(b.dataset.q)===m)?"true":"false");
+  });
+}
+function qsync(){qs("mult","mq");qs("cmult","cmq")}
+[["mq","mult"],["cmq","cmult"]].forEach(function(p){
+  $(p[0]).addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$(p[1]).value=b.dataset.q;qsync()});
+  $(p[1]).addEventListener("input",qsync);
+});
+$("clear").onclick=function(){clr();$("ename").value="";cat="";csync();$("cmult").value="1";qsync();sm("")};
 
 function sm(t,e){var s=$("savemsg");s.textContent=t;s.className=e?"bad":"rem"}
 function vals(){var v={};for(var i=0;i<4;i++){var n=num(el[ids[i]].value);if(n===null||isNaN(n))return null;v[ids[i]]=n}return v}
 $("addlog").onclick=function(){
   var v=vals();if(!v){sm("P・F・C・カロリーの4項目がそろうと記録できます。",1);return}
-  v.name=$("ename").value.trim();if(cat)v.cat=cat;add(cur,v);$("ename").value="";clr();sm(lab(cur)+"に記録しました。「ホーム」で確認できます。");
+  var m=num($("cmult").value);if(!m||isNaN(m))m=1;
+  var nm0=$("ename").value.trim();
+  if(m!==1){
+    var r=function(x){return Math.round(x*m*10)/10};
+    v.p=r(v.p);v.f=r(v.f);v.c=r(v.c);v.k=r(v.k);
+    nm0=(nm0?nm0+" ":"")+"×"+m;
+  }
+  v.name=nm0;if(cat)v.cat=cat;add(cur,v);$("ename").value="";clr();$("cmult").value="1";qsync();sm(lab(cur)+"に記録しました。「ホーム」で確認できます。");
 };
 $("addmy").onclick=function(){
   var v=vals(),nm=$("ename").value.trim();
@@ -495,15 +515,6 @@ $("bin").onclick=function(){
   }catch(x){bm("読み込めませんでした。書き出した文字を、そのまま貼り付けてください。",1)}
 };
 
-function qsync(){
-  var m=num($("mult").value);
-  [].forEach.call(document.querySelectorAll("#mq button"),function(b){
-    b.setAttribute("aria-pressed",(m!==null&&!isNaN(m)&&Number(b.dataset.q)===m)?"true":"false");
-  });
-}
-$("mq").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$("mult").value=b.dataset.q;qsync()});
-$("mult").addEventListener("input",qsync);
-
 function rMy(){
   var l=D.my;
   $("mdest").textContent=lab(cur);
@@ -551,7 +562,7 @@ function show(t){
   if(t==="today")rToday();
   if(t==="hist"){vy=+cur.slice(0,4);vm=+cur.slice(5,7);rCal();bm("")}
   if(t==="my"){rMy();$("mymsg").textContent=""}
-  if(t==="calc")dest();
+  if(t==="calc"){dest();qsync();csync()}
   window.scrollTo(0,0);
 }
 $("tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(b.dataset.t)});
