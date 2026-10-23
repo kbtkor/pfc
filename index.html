@@ -111,6 +111,8 @@ summary{font-size:15px;font-weight:600}
 .dot{display:block;width:5px;height:5px;border-radius:50%;margin:5px auto 0;background:transparent}
 .dot.on{background:var(--ink)}
 .day.out{color:var(--sub);opacity:.5}
+.day.sat{color:var(--p)}
+.day.sun{color:var(--err)}
 .day.today{border-color:var(--ink)}
 .day.sel{background:var(--ink);color:var(--bg)}
 .day.sel .dot.on{background:var(--bg)}
@@ -165,7 +167,6 @@ summary{font-size:15px;font-weight:600}
 <div class="datebar" style="margin-top:0"><button id="mprev" aria-label="前の月">‹</button><div id="mlabel"></div><button id="mnext" aria-label="次の月">›</button></div>
 <div class="cal"><div class="dow">日</div><div class="dow">月</div><div class="dow">火</div><div class="dow">水</div><div class="dow">木</div><div class="dow">金</div><div class="dow">土</div></div>
 <div class="cal" id="cal"></div>
-<div class="rem" style="margin-top:10px">点のある日は記録済みです。日付をタップすると、その日の記録を見たり、記録を追加したりできます。</div>
 <button class="wide" id="mtoday" type="button">今日を選ぶ</button>
 </div>
 <div class="card">
@@ -179,7 +180,7 @@ summary{font-size:15px;font-weight:600}
 
 <section id="t-my" hidden>
 <div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
-<div class="qrow" id="mq"><button type="button" data-q="1.5" aria-pressed="false">1.5</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="0.5" aria-pressed="false">0.5</button></div>
+<div class="qrow" id="mq"><button type="button" data-q="0.5" aria-pressed="false">0.5</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1.5" aria-pressed="false">1.5</button></div>
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
 <div class="card"><div class="lh"><b>myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
@@ -208,6 +209,35 @@ function p2(n){return n<10?"0"+n:""+n}
 function ymd(d){return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())}
 function shift(s,n){var a=s.split("-");return ymd(new Date(+a[0],+a[1]-1,+a[2]+n))}
 function lab(s){var a=s.split("-"),d=new Date(+a[0],+a[1]-1,+a[2]);return(+a[1])+"月"+(+a[2])+"日("+"日月火水木金土"[d.getDay()]+")"}
+var HC={};
+function nthMon(y,m,n){var wd=new Date(y,m-1,1).getDay();return 1+((8-wd)%7)+7*(n-1)}
+function holidays(y){
+  if(HC[y])return HC[y];
+  var H={},b=[],dy=y-1980,ex=Math.floor(dy/4);
+  function a(m,d){b.push(new Date(y,m-1,d))}
+  a(1,1);a(1,nthMon(y,1,2));a(2,11);
+  if(y>=2020)a(2,23);else if(y>=1989&&y!==2019)a(12,23);
+  a(3,Math.floor(20.8431+0.242194*dy-ex));
+  a(4,29);a(5,3);a(5,4);a(5,5);
+  if(y===2020){a(7,23);a(7,24);a(8,10)}
+  else if(y===2021){a(7,22);a(7,23);a(8,8)}
+  else{a(7,nthMon(y,7,3));a(8,11);a(10,nthMon(y,10,2))}
+  a(9,nthMon(y,9,3));
+  a(9,Math.floor(23.2488+0.242194*dy-ex));
+  a(11,3);a(11,23);
+  if(y===2019){a(4,30);a(5,1);a(5,2);a(10,22)}
+  b.forEach(function(d){H[ymd(d)]=true});
+  b.sort(function(p,q){return p-q});
+  b.forEach(function(d){
+    if(d.getDay()===0){var n=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);while(H[ymd(n)])n.setDate(n.getDate()+1);H[ymd(n)]=true}
+  });
+  for(var i=1;i<364;i++){
+    var t=new Date(y,0,1+i),k=ymd(t);
+    if(!H[k]&&t.getDay()!==0&&H[ymd(new Date(y,0,i))]&&H[ymd(new Date(y,0,2+i))])H[k]=true;
+  }
+  HC[y]=H;return H;
+}
+function isHol(d){return !!holidays(d.getFullYear())[ymd(d)]}
 var cur=ymd(new Date());
 var vy=+cur.slice(0,4),vm=+cur.slice(5,7);
 var sortE=false,sortM=false,editE=null,editM=null;
@@ -357,8 +387,8 @@ function catHtml(l){
     var sub=l.filter(function(e){return(e.cat||"")===c});
     if(!sub.length)return;
     var t=tot(sub);
-    if(!any){h+='<span class="h"></span><span class="h i k">kcal</span><span class="h"></span><span class="h i">P</span><span class="h"></span><span class="h i">F</span><span class="h"></span><span class="h i">C</span><span class="h"></span>';any=true}
-    h+='<span class="l"><i class="tag" data-c="'+esc(c)+'">'+(c||"未分類")+'</i></span>'+nm(t.k)+nm(t.p)+nm(t.f)+nm(t.c);
+    if(!any){h+='<span class="h"></span><span class="h i">P</span><span class="h"></span><span class="h i">F</span><span class="h"></span><span class="h i">C</span><span class="h"></span><span class="h i k">kcal</span><span class="h"></span>';any=true}
+    h+='<span class="l"><i class="tag" data-c="'+esc(c)+'">'+(c||"未分類")+'</i></span>'+nm(t.p)+nm(t.f)+nm(t.c)+nm(t.k);
   });
   return any?'<b style="font-size:15px">分類別</b><div class="cg">'+h+'</div>':"";
 }
@@ -436,10 +466,11 @@ function rCal(){
   $("mlabel").textContent=vy+"年"+vm+"月";
   var off=new Date(vy,vm-1,1).getDay();
   var rows=Math.ceil((off+new Date(vy,vm,0).getDate())/7);
-  var today=ymd(new Date()),h="",i,d,s,has;
+  var today=ymd(new Date()),h="",i,d,s,has,dw,hc;
   for(i=0;i<rows*7;i++){
     d=new Date(vy,vm-1,1-off+i);s=ymd(d);has=(D.entries[s]||[]).length>0;
-    h+='<button class="day'+(d.getMonth()===vm-1?"":" out")+(s===today?" today":"")+(s===cur?" sel":"")+'" data-d="'+s+'" aria-label="'+lab(s)+(has?" 記録あり":"")+'"><span>'+d.getDate()+'</span><i class="dot'+(has?" on":"")+'"></i></button>';
+    dw=d.getDay();hc=(dw===0||isHol(d))?" sun":(dw===6?" sat":"");
+    h+='<button class="day'+(d.getMonth()===vm-1?"":" out")+hc+(s===today?" today":"")+(s===cur?" sel":"")+'" data-d="'+s+'" aria-label="'+lab(s)+(has?" 記録あり":"")+'"><span>'+d.getDate()+'</span><i class="dot'+(has?" on":"")+'"></i></button>';
   }
   $("cal").innerHTML=h;
 }
