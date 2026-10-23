@@ -378,7 +378,7 @@ $("addmy").onclick=function(){
   v.name=nm;v.id=Date.now()+"_"+Math.floor(Math.random()*1e4);D.my.push(v);save();$("ename").value="";sm("myリストに登録しました。");
 };
 
-var KS=[["p","たんぱく質","g","--p"],["f","脂質","g","--f"],["c","炭水化物","g","--c"],["k","カロリー","kcal","--k"]];
+var KS=[["p","たんぱく質(P)","g","--p"],["f","脂質(F)","g","--f"],["c","炭水化物(C)","g","--c"],["k","カロリー","kcal","--k"]];
 function dest(){$("dest").textContent=lab(cur)}
 function nm(v){var s=f1(v),i=s.indexOf(".");return'<span class="i">'+s.slice(0,i)+'</span><span class="d">'+s.slice(i)+'</span>'}
 function catHtml(l){
