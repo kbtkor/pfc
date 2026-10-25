@@ -305,6 +305,9 @@ function readForm(box){
     var r=solve(v,r4.em[0]);
     if(r<0){msg.textContent="計算結果がマイナスになります。入力値を確認してください。";return null}
     v[r4.em[0]]=Math.round(r*10)/10;
+  }else{
+    var t=v.p*4+v.f*9+v.c*4,d=v.k-t;
+    if(Math.abs(d)>=1){msg.textContent="P・F・Cから計算すると "+fmt(t)+" kcal です(入力との差 "+(d>0?"+":"")+fmt(d)+" kcal)。入力値を確認してください。";return null}
   }
   o.p=v.p;o.f=v.f;o.c=v.c;o.k=v.k;
   return o;
