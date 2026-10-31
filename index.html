@@ -23,11 +23,14 @@ button:disabled{opacity:.3}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #tabs button{flex:1;padding:10px 2px;font-size:14px}
 #tabs button[aria-selected="true"],.lh button[aria-pressed="true"],.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#bout{border-color:var(--p)}
+#bin{border-color:var(--f)}
 .wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
 .fi.auto{color:var(--sub);border-style:dashed}
 .rem{font-size:12px;color:var(--sub);line-height:1.6}
+.dt{font-size:15px;font-weight:700;color:var(--ink)}
 .bad{font-size:13px;color:var(--err);line-height:1.6}
 .datebar{display:flex;align-items:center;gap:8px;margin:4px 0 12px}
 .datebar button{width:48px}
@@ -129,10 +132,10 @@ summary{font-size:15px;font-weight:600}
 <div class="card" id="cats" hidden></div>
 <details class="card"><summary>目標設定</summary>
 <div class="gg">
-<label>カロリー(kcal)<input class="fi" id="gk" inputmode="decimal"></label>
 <label>たんぱく質(g)<input class="fi" id="gp" inputmode="decimal"></label>
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
 <label>炭水化物(g)<input class="fi" id="gc" inputmode="decimal"></label>
+<label>カロリー(kcal)<input class="fi" id="gk" inputmode="decimal"></label>
 </div>
 <button class="wide" id="gsave" type="button">目標を保存</button>
 <div id="gmsg" class="rem" style="margin-top:8px" aria-live="polite"></div>
@@ -154,7 +157,7 @@ summary{font-size:15px;font-weight:600}
 <div id="bar"></div>
 <div id="ratio"></div>
 <div class="card" id="calcdest">
-<div class="rem" style="margin-bottom:8px">記録先: <span id="dest"></span></div>
+<div class="rem" style="margin-bottom:8px">記録先: <span class="dt" id="dest"></span></div>
 <input class="fi" id="ename" placeholder="名前(例:Big Mac)" autocomplete="off">
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <button class="wide" id="addlog">この日に記録</button>
@@ -182,7 +185,7 @@ summary{font-size:15px;font-weight:600}
 </section>
 
 <section id="t-my" hidden>
-<div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
+<div class="card"><div class="rem" style="margin-bottom:8px">記録先: <span class="dt" id="mdest"></span></div><label class="rem">記録する量(倍)<input class="fi" id="mult" value="1" inputmode="decimal"></label>
 <div class="qrow" id="mq"><button type="button" data-q="0.5" aria-pressed="false">0.5</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1.5" aria-pressed="false">1.5</button></div>
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
