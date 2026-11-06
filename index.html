@@ -470,6 +470,12 @@ $("elist").addEventListener("click",function(e){
   if(b.dataset.cancel){editE=null;rToday();return}
   if(b.dataset.add){
     var a=readForm(b.closest(".edit"));if(!a)return;
+    var mm=a.name.match(/\s*×([0-9]+(?:\.[0-9]+)?)$/);
+    if(mm&&Number(mm[1])>0){
+      var q=Number(mm[1]);
+      a.name=a.name.slice(0,mm.index).trim();
+      K4.forEach(function(k){a[k]=a[k]/q});
+    }
     clr();K4.forEach(function(k){el[k].value=fmt(a[k])});
     $("ename").value=a.name;cat=a.cat||"";$("cmult").value="1";sm("");
     show("calc");calc(null);return;
