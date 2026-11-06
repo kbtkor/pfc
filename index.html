@@ -161,6 +161,8 @@ summary{font-size:15px;font-weight:600}
 <input class="fi" id="ename" placeholder="名前(例:Big Mac)" autocomplete="off">
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <button class="wide" id="addlog">この日に記録</button>
+<button class="wide" id="addother" type="button">他の日に記録</button>
+<div id="odbox" hidden style="margin-top:12px"><input class="fi" type="date" id="odate"><button class="wide" id="odgo" type="button" style="margin-top:8px">この日付に記録</button></div>
 <button class="wide" id="addmy">Myリストに登録</button>
 <div id="savemsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
 <button class="wide" id="clear" type="button">すべてクリア</button>
@@ -275,7 +277,7 @@ function form(e,isRec){
   +'<label>脂質(g)<input class="fi" data-k="f" inputmode="decimal" value="'+fmt(e.f)+'"></label>'
   +'<label>炭水化物(g)<input class="fi" data-k="c" inputmode="decimal" value="'+fmt(e.c)+'"></label>'
   +'<label>カロリー(kcal)<input class="fi" data-k="k" inputmode="decimal" value="'+fmt(e.k)+'"></label></div>'
-  +'<div class="ea"><button data-save="'+e.id+'">保存</button><button data-cancel="1">キャンセル</button></div>'
+  +'<div class="ea"><button data-save="'+e.id+'">保存</button>'+(isRec?'<button data-add="'+e.id+'">追加</button>':'')+'<button data-cancel="1">キャンセル</button></div>'
   +'<div class="bad emsg"></div></div></div>';
 }
 function fv(box,k){return box.querySelector('[data-k="'+k+'"]')}
@@ -390,15 +392,26 @@ function qsync(){qs("mult","mq");qs("cmult","cmq")}
 function sm(t,e){say("savemsg",t,e)}
 $("clear").onclick=function(){clr();$("ename").value="";cat="";csync();$("cmult").value="1";qsync();sm("")};
 function vals(){var r4=read4(function(k){return el[k].value});return(r4.bad||r4.em.length)?null:r4.v}
-$("addlog").onclick=function(){
-  var v=vals();if(!v){sm("P・F・C・カロリーの4項目がそろうと記録できます。",1);return}
+function recTo(date){
+  var v=vals();if(!v){sm("P・F・C・カロリーの4項目がそろうと記録できます。",1);return false}
   var m=num($("cmult").value);if(!m||isNaN(m))m=1;
   var nm0=$("ename").value.trim();
   if(m!==1){
     K4.forEach(function(k){v[k]=Math.round(v[k]*m*10)/10});
     nm0=(nm0?nm0+" ":"")+"×"+m;
   }
-  v.name=nm0;if(cat)v.cat=cat;add(cur,v);$("ename").value="";clr();$("cmult").value="1";qsync();sm(lab(cur)+"に記録しました。「ホーム」で確認できます。");
+  v.name=nm0;if(cat)v.cat=cat;add(date,v);$("ename").value="";clr();$("cmult").value="1";qsync();sm(lab(date)+"に記録しました。「ホーム」で確認できます。");
+  return true;
+}
+$("addlog").onclick=function(){recTo(cur)};
+$("addother").onclick=function(){
+  var b=$("odbox");b.hidden=!b.hidden;
+  if(!b.hidden&&!$("odate").value)$("odate").value=cur;
+};
+$("odgo").onclick=function(){
+  var d=$("odate").value;
+  if(!d){sm("日付を選択してください。",1);return}
+  if(recTo(d))$("odbox").hidden=true;
 };
 $("addmy").onclick=function(){
   var v=vals(),nm=$("ename").value.trim();
@@ -455,6 +468,12 @@ $("elist").addEventListener("click",function(e){
   }
   if(b.dataset.edit){editE=b.dataset.edit;rToday();return}
   if(b.dataset.cancel){editE=null;rToday();return}
+  if(b.dataset.add){
+    var a=readForm(b.closest(".edit"));if(!a)return;
+    clr();K4.forEach(function(k){el[k].value=fmt(a[k])});
+    $("ename").value=a.name;cat=a.cat||"";$("cmult").value="1";sm("");
+    show("calc");calc(null);return;
+  }
   if(b.dataset.save){
     var o=readForm(b.closest(".edit"));if(!o)return;
     l.forEach(function(x){if(String(x.id)===b.dataset.save){x.name=o.name;x.p=o.p;x.f=o.f;x.c=o.c;x.k=o.k;if(o.cat)x.cat=o.cat;else delete x.cat}});
