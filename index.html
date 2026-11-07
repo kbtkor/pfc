@@ -8,7 +8,7 @@
 <title>Code_PFC</title>
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0BAMAAADP4xsBAAAAElBMVEX3+vju8u96fnwSFhQSFhMIDAoehTStAAADdElEQVR42u2YzXKbMBDH/0t6xhLttQ4mOWdS8gSdPkEfuG/Qj0zOtcDpOUjKvWwPwgYMTjElh86sLpYw/mm92k/RHV5rRBC0oAUtaEELWtCCFrSgBS1oQQta0IIWtKAF/b+j3wye0GY/s3a/f9p9oS57bx6WA9DgdlK5wzTjAgDArvtCws1nXDgAycZMlVp9P0wLnRsA4N6PL+JAfvpZhP+Wm4nodrC1uC0BgFTnaaOkJ+N12Jfz4txjJK3Mgzpx/O9Nsx8p8yM9V2oAarsa/2L9hQ5zbaJ4hvHFblxo4zur1TadgSYz+mfXRVdRFD/McZnVY2vm1tpg632hARoT+wVds1cA2O31qDv7fQ1C2/3TVoC/oxMFtqUCqLoJ7uY/NmonRuwVAFitrQ0W6OLp6BSobSNZYy2NTbCLgqbdVZLWP4wGQNvP5VQ0GyBSfY3a/oyTvDJ0t7pXrSNNOUYCUH9wJ4zaA4DPjAObbHVC2S9aCA1jUxuuOFkDAB5DpHTLxOugmSRot944AFSpMx193BWdAvD8qTm4XY6zI1+QjvYBnDIAqFz3PENYBwAuJlsIgKjnzSha/QOAPmjXnCc1bYDfP3seHwjXjZlx5M7OjWE8PQEVAWDthgZCABRmos0htyQD9GpuRj+KRf6aX6sOiS5fq8SxWblcidM/seSm7Hp30NESaBvdlW1+P8yUB2DjmegmTFy1add/9t3ISpyW8y1E4+26HI3XvVUo/aY7+nUKANW4YNoD4F2zuvwGAJS6M7LMqVGn9wpY+bj76jt3TpZ5OUXsC4Tou9ZaK71MKvAhZz0oAPR+d1xw/kMqwHPIx1uVAfU3BQB+XS6CZr1TAOJtpdju1FH982/ozT0AUG1UKLHASblQm/TrsnHLvY79eqkOrM7dUahRizV3vh9q/Vh8nIvOXE/o9XItKV90/JqfR4P63G63yg9s9lfxxMhnh37OFnT06DFHQQpgp69uyolojeOilvRwt/oxJ8uOVPZ2XU5spCcP2lTOamSnmvQRtB6EfVLjxTBtOncES0ottziClsu43l1cG5yKZdChzOrvdlsugSZjRq63FpGaWI/cucSLHCOJXQ+b89exa6Zh1qB5XekAnQ1bN7pcxK6xuxtv2BdAsxHjE7SgBS1oQQta0IIWtKAFLWhBC1rQgha0oAW9H38AWRwkaV0OhDwAAAAASUVORK5CYII=">
 <style>
-:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--o:#e8662a;--k:#1c2420;--err:#c0392b;
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--o:#e8662a;--k:#1c2420;--err:#c0392b;--btn-g:#23805a;--btn-b:#2a5fc4;--btn-y:#b87a14;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}}
 *{box-sizing:border-box}
@@ -26,9 +26,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 #bout{border-color:var(--p)}
 #bin{border-color:var(--f)}
 .wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
-#addlog{background:var(--c);border-color:var(--c);color:#fff}
-#addmy{background:var(--f);border-color:var(--f);color:#fff}
-#addother,#odgo,#odate{background:var(--p);border-color:var(--p);color:#fff}
+#addlog{background:var(--btn-g);border-color:var(--btn-g);color:#fff}
+#addmy{background:var(--btn-y);border-color:var(--btn-y);color:#fff}
+#addother,#odgo,#odate{background:var(--btn-b);border-color:var(--btn-b);color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
 .fi.auto{color:var(--sub);border-style:dashed}
