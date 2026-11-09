@@ -138,12 +138,13 @@ summary{font-size:15px;font-weight:600}
 .lr{display:grid;grid-template-columns:1fr repeat(4,3.6em);gap:0 6px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line);font-size:15px;font-variant-numeric:tabular-nums}
 .lr span{text-align:right}
 .lr .ld{text-align:left;white-space:nowrap}
-.lr.hd{padding:4px 0 6px;font-size:12px;color:var(--sub)}
+.lr.hd{padding:4px 0 6px}
 .hc{display:flex;justify-content:flex-end;align-items:baseline;font-size:15px}
 .kx{display:inline-grid;align-items:baseline;font-style:normal}
 .kx small{grid-area:1/1;visibility:hidden;font-size:15px}
 .kx b{grid-area:1/1;justify-self:start;font-size:12px;font-weight:400;color:var(--sub)}
 .kx.c b{justify-self:center}
+.kx.kk b{padding-left:1.5px}
 .ph{visibility:hidden;font-style:normal}
 .er{color:var(--err)}
 .bl{color:var(--p)}
@@ -689,7 +690,7 @@ function rLog(){
   var ks=Object.keys(D.entries).filter(function(k){return D.entries[k].length}).sort().reverse();
   function c(v,g,hi,lo){var a=Math.abs(v-g),cl=g>0?(a>=hi?"er":(a<=lo?"bl":"")):"";return'<span'+(cl?' class="'+cl+'"':'')+'>'+f1(v)+'</span>'}
   function hc(t,w,cn){return'<span class="hc"><i class="kx'+cn+'"><small>'+w+'</small><b>'+t+'</b></i><i class="ph">.0</i></span>'}
-  $("loglist").innerHTML=ks.length?'<div class="lr hd"><span></span>'+hc("P","0"," c")+hc("F","0"," c")+hc("C","0"," c")+hc("kcal","000","")+'</div>'+ks.map(function(d){
+  $("loglist").innerHTML=ks.length?'<div class="lr hd"><span></span>'+hc("P","0"," c")+hc("F","0"," c")+hc("C","0"," c")+hc("kcal","000"," kk")+'</div>'+ks.map(function(d){
     var t=tot(D.entries[d]),g=goalFor(d),a=d.split("-");
     return'<div class="lr"><span class="ld">'+a[0]+"年"+(+a[1])+"月"+(+a[2])+"日</span>"+c(t.p,g.p,25,10)+c(t.f,g.f,25,10)+c(t.c,g.c,25,10)+c(t.k,g.k,250,100)+'</div>'
   }).join(""):'<div class="rem" style="padding:16px 0">記録がありません。</div>';
