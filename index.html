@@ -10,14 +10,14 @@
 <style>
 :root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--o:#e8662a;--k:#1c2420;--err:#c0392b;--btn-g:#23805a;--btn-b:#2a5fc4;--btn-y:#b87a14;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}#tabs{border-color:#fff}}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b;--tb:#fff}}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
 main{max-width:480px;margin:0 auto;padding:12px 16px 140px}
 h1{font-size:20px;margin:4px 0 12px}
-#tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:456px;z-index:15;display:flex;gap:2px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:32px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:456px;z-index:15;display:flex;gap:2px;padding:6px;background:var(--card);border:1px solid var(--tb,var(--line));border-radius:32px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
 button:disabled{opacity:.3}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
