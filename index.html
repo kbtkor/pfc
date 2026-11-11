@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#f6f7f5;--card:#fff;--ink:#1c2420;--sub:#66726b;--line:#dde2de;--p:#2f6fdb;--f:#d99a1e;--c:#2e9e6a;--o:#e8662a;--k:#1c2420;--err:#c0392b;--btn-g:#23805a;--btn-b:#2a5fc4;--btn-y:#b87a14;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}}
+@media (prefers-color-scheme:dark){:root{--bg:#121614;--card:#1b211e;--ink:#eef2ef;--sub:#93a09a;--line:#2b332f;--p:#6aa0ff;--f:#f0b64a;--c:#55c58c;--o:#ff8a3d;--k:#eef2ef;--err:#ff7b6b}#tabs{border-color:#fff}}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
@@ -137,9 +137,10 @@ summary{font-size:15px;font-weight:600}
 .lg i.d{border-top-style:dashed}
 #logv{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .lw{max-width:480px;margin:0 auto;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 32px)}
-.lgh{position:sticky;top:0;z-index:1;background:var(--bg);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 14px) 0 10px}
-.lgh b{font-size:17px}
-.lgh button{justify-self:end;padding:6px 12px;font-size:14px}
+.lgh{position:sticky;top:0;z-index:1;background:var(--bg);padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
+.lgt{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding-bottom:10px}
+.lgt b{font-size:17px}
+.lgt button{justify-self:end;padding:6px 12px;font-size:14px}
 .lr{display:grid;grid-template-columns:1fr repeat(4,3.6em);gap:0 6px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line);font-size:15px;font-variant-numeric:tabular-nums}
 .lr span{text-align:right}
 .lr .ld{text-align:left;white-space:nowrap}
@@ -238,7 +239,7 @@ summary{font-size:15px;font-weight:600}
 </section>
 </main>
 <nav id="tabs"><button data-t="today"><i class="ic" data-ic="home"></i><span>ホーム</span></button><button data-t="calc"><i class="ic" data-ic="calc"></i><span>計算</span></button><button data-t="my"><i class="ic" data-ic="clip"></i><span>Myリスト</span></button><button data-t="hist"><i class="ic" data-ic="cal"></i><span>カレンダー</span></button><button data-t="data"><i class="ic" data-ic="chart"></i><span>データ</span></button></nav>
-<div id="logv" hidden><div class="lw"><div class="lgh"><span></span><b>ログ</b><button id="lclose" type="button">閉じる</button></div><div id="loglist"></div></div></div>
+<div id="logv" hidden><div class="lw"><div class="lgh"><div class="lgt"><span></span><b>ログ</b><button id="lclose" type="button">閉じる</button></div><div id="loghd"></div></div><div id="loglist"></div></div></div>
 <script>
 (function(){
 function $(i){return document.getElementById(i)}
@@ -708,7 +709,8 @@ function rLog(){
   var ks=Object.keys(D.entries).filter(function(k){return D.entries[k].length}).sort().reverse();
   function c(v,g,hi,lo){var a=Math.abs(v-g),cl=g>0?(a>=hi?"er":(a<=lo?"bl":"")):"";return'<span'+(cl?' class="'+cl+'"':'')+'>'+f1(v)+'</span>'}
   function hc(t,w,cn){return'<span class="hc"><i class="kx'+cn+'"><small>'+w+'</small><b>'+t+'</b></i><i class="ph">.0</i></span>'}
-  $("loglist").innerHTML=ks.length?'<div class="lr hd"><span></span>'+hc("P","0"," c")+hc("F","0"," c")+hc("C","0"," c")+hc("kcal","000"," kk")+'</div>'+ks.map(function(d){
+  $("loghd").innerHTML=ks.length?'<div class="lr hd"><span></span>'+hc("P","0"," c")+hc("F","0"," c")+hc("C","0"," c")+hc("kcal","000"," kk")+'</div>':"";
+  $("loglist").innerHTML=ks.length?ks.map(function(d){
     var t=tot(D.entries[d]),g=goalFor(d),a=d.split("-");
     return'<div class="lr"><span class="ld">'+a[0]+"年"+(+a[1])+"月"+(+a[2])+"日</span>"+c(t.p,g.p,25,10)+c(t.f,g.f,25,10)+c(t.c,g.c,25,10)+c(t.k,g.k,250,100)+'</div>'
   }).join(""):'<div class="rem" style="padding:16px 0">記録がありません。</div>';
