@@ -15,14 +15,19 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
-main{max-width:480px;margin:0 auto;padding:12px 16px 120px}
-h1{font-size:20px;margin:4px 0 0}
-#tabs{display:flex;gap:4px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:10px 0;z-index:5}
+main{max-width:480px;margin:0 auto;padding:12px 16px 140px}
+h1{font-size:20px;margin:4px 0 12px}
+#tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:456px;z-index:15;display:flex;gap:2px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:32px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
 button:disabled{opacity:.3}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-#tabs button{flex:1;padding:10px 0;font-size:12px;white-space:nowrap}
-#tabs button[aria-selected="true"],.lh button[aria-pressed="true"],.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;border:0;border-radius:26px;background:transparent;color:var(--ink);font-size:11px;white-space:nowrap}
+#tabs button[aria-selected="true"]{background:var(--line);font-weight:600}
+#tabs .ic{margin:0;vertical-align:baseline}
+#tabs .ic svg{width:24px;height:24px}
+.ic{display:inline-flex;vertical-align:-4px;margin-right:6px}
+.ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lh button[aria-pressed="true"],.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 #bout{border-color:var(--p)}
 #bin{border-color:var(--f)}
 .wide{width:100%;margin-top:12px;padding:14px;font-size:16px;border-radius:12px}
@@ -153,14 +158,13 @@ summary{font-size:15px;font-weight:600}
 <body>
 <main>
 <h1>Code_PFC</h1>
-<nav id="tabs"><button data-t="today">ホーム</button><button data-t="calc">計算</button><button data-t="my">Myリスト</button><button data-t="hist">カレンダー</button><button data-t="data">データ</button></nav>
 <div id="warn" class="bad" hidden>この環境では記録を保存できません(プライベートブラウズ中など)。</div>
 
 <section id="t-today">
 <div class="datebar"><button id="dprev" aria-label="前の日">‹</button><div id="dlabel"></div><button id="dnext" aria-label="次の日">›</button></div>
 <div class="card" id="sum"></div>
 <div class="card" id="cats" hidden></div>
-<details class="card"><summary>目標設定</summary>
+<details class="card"><summary><i class="ic" data-ic="target"></i>目標設定</summary>
 <div class="gg">
 <label>たんぱく質(g)<input class="fi" id="gp" inputmode="decimal"></label>
 <label>脂質(g)<input class="fi" id="gf" inputmode="decimal"></label>
@@ -170,11 +174,11 @@ summary{font-size:15px;font-weight:600}
 <button class="wide" id="gsave" type="button">目標を保存</button>
 <div id="gmsg" class="rem" style="margin-top:8px" aria-live="polite"></div>
 </details>
-<div class="card"><div class="lh"><b>記録</b><button id="esort" aria-pressed="false">並び替え</button></div><div id="elist"></div></div>
+<div class="card"><div class="lh"><b><i class="ic" data-ic="edit"></i>記録</b><button id="esort" aria-pressed="false">並び替え</button></div><div id="elist"></div></div>
 </section>
 
 <section id="t-calc" hidden>
-<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px">ラベルから読み取る</b>
+<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px"><i class="ic" data-ic="scan"></i>ラベルから読み取る</b>
 <textarea class="fi" id="scan" rows="3" placeholder="ここに栄養成分貼り付け" autocomplete="off"></textarea>
 <div id="scanmsg" aria-live="polite"></div></div>
 <div class="row p"><label for="p">たんぱく質 (P)</label><input id="p" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
@@ -203,7 +207,7 @@ summary{font-size:15px;font-weight:600}
 <div class="qrow" id="mq"><button type="button" data-q="0.5" aria-pressed="false">0.5</button><button type="button" data-q="0.8" aria-pressed="false">0.8</button><button type="button" data-q="1" aria-pressed="true">1</button><button type="button" data-q="1.2" aria-pressed="false">1.2</button><button type="button" data-q="1.5" aria-pressed="false">1.5</button></div>
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <div id="mymsg" class="rem" style="margin-top:8px" aria-live="polite"></div></div>
-<div class="card"><div class="lh"><b>Myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
+<div class="card"><div class="lh"><b><i class="ic" data-ic="clip"></i>Myリスト</b><button id="msort" aria-pressed="false">並び替え</button></div><div id="mylist"></div></div>
 </section>
 
 <section id="t-hist" hidden>
@@ -214,7 +218,7 @@ summary{font-size:15px;font-weight:600}
 <button class="wide" id="mtoday" type="button">今日</button>
 </div>
 <div class="card">
-<b style="font-size:15px">バックアップ</b>
+<b style="font-size:15px"><i class="ic" data-ic="cloud"></i>バックアップ</b>
 <div class="rem" style="margin:4px 0 8px">記録を文字として書き出し、メモアプリなどに保存しておくと、データが消えても復元できます。</div>
 <textarea class="fi" id="bbox" rows="3" placeholder="書き出した文字、または復元したい文字" autocomplete="off"></textarea>
 <div style="display:flex;gap:8px;margin-top:8px"><button id="bout" style="flex:1" type="button">書き出し</button><button id="bin" style="flex:1" type="button">復元</button></div>
@@ -230,13 +234,27 @@ summary{font-size:15px;font-weight:600}
 <div id="dchart"></div>
 <div class="lg"><span><i class="b"></i>カロリー(左軸)</span><span><i style="border-color:var(--p)"></i>P</span><span><i style="border-color:var(--f)"></i>F</span><span><i style="border-color:var(--c)"></i>C(右軸)</span><span><i class="d"></i>目標</span></div>
 </div>
-<button class="wide" id="dlog" type="button" style="margin-top:0">ログ</button>
+<button class="wide" id="dlog" type="button" style="margin-top:0"><i class="ic" data-ic="list"></i>ログ</button>
 </section>
 </main>
+<nav id="tabs"><button data-t="today"><i class="ic" data-ic="home"></i><span>ホーム</span></button><button data-t="calc"><i class="ic" data-ic="calc"></i><span>計算</span></button><button data-t="my"><i class="ic" data-ic="clip"></i><span>Myリスト</span></button><button data-t="hist"><i class="ic" data-ic="cal"></i><span>カレンダー</span></button><button data-t="data"><i class="ic" data-ic="chart"></i><span>データ</span></button></nav>
 <div id="logv" hidden><div class="lw"><div class="lgh"><span></span><b>ログ</b><button id="lclose" type="button">閉じる</button></div><div id="loglist"></div></div></div>
 <script>
 (function(){
 function $(i){return document.getElementById(i)}
+var IC={
+home:'<path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/>',
+calc:'<path d="M4 3m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"/><path d="M8 7m0 1a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1z"/><path d="M8 14l0 .01"/><path d="M12 14l0 .01"/><path d="M16 14l0 .01"/><path d="M8 17l0 .01"/><path d="M12 17l0 .01"/><path d="M16 17l0 .01"/>',
+clip:'<path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/><path d="M9 12l.01 0"/><path d="M13 12l2 0"/><path d="M9 16l.01 0"/><path d="M13 16l2 0"/>',
+cal:'<path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M15 19l2 2l4 -4"/>',
+chart:'<path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M9 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M15 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"/><path d="M4 20l14 0"/>',
+target:'<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>',
+edit:'<path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/>',
+scan:'<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v1"/><path d="M16 20h2a2 2 0 0 0 2 -2v-1"/><path d="M5 12l14 0"/>',
+cloud:'<path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12l0 9"/>',
+list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>'
+};
+[].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[e.dataset.ic]+'</svg>'});
 var KEY="claude_pfc_v1",CATS=["朝食","昼食","夕食","補食"],K4=["p","f","c","k"];
 try{screen.orientation.lock("portrait").catch(function(){})}catch(e){}
 function fix(d){
