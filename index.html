@@ -15,8 +15,12 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
-main{max-width:480px;margin:0 auto;padding:12px 16px 140px}
+main{max-width:480px;margin:0 auto;padding:12px 16px 140px;overflow-x:hidden}
 h1{font-size:20px;margin:4px 0 12px}
+@keyframes sl{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes sr{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+.sl{animation:sl .22s ease-out}
+.sr{animation:sr .22s ease-out}
 #tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:456px;z-index:15;display:flex;gap:2px;padding:6px;background:var(--card);border:1px solid var(--tb,var(--line));border-radius:32px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 button{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
 button:disabled{opacity:.3}
@@ -239,7 +243,7 @@ summary{font-size:15px;font-weight:600}
 </section>
 </main>
 <nav id="tabs"><button data-t="today"><i class="ic" data-ic="home"></i><span>ホーム</span></button><button data-t="calc"><i class="ic" data-ic="calc"></i><span>計算</span></button><button data-t="my"><i class="ic" data-ic="clip"></i><span>Myリスト</span></button><button data-t="hist"><i class="ic" data-ic="cal"></i><span>カレンダー</span></button><button data-t="data"><i class="ic" data-ic="chart"></i><span>データ</span></button></nav>
-<div id="logv" hidden><div class="lw"><div class="lgh"><div class="lgt"><span></span><b>ログ</b><button id="lclose" type="button">閉じる</button></div><div id="loghd"></div></div><div id="loglist"></div></div></div>
+<div id="logv" hidden><div class="lw"><div class="lgh"><div class="lgt"><span></span><b><i class="ic" data-ic="list"></i>ログ</b><button id="lclose" type="button">閉じる</button></div><div id="loghd"></div></div><div id="loglist"></div></div></div>
 <script>
 (function(){
 function $(i){return document.getElementById(i)}
@@ -255,8 +259,9 @@ scan:'<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><pa
 cloud:'<path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12l0 9"/>',
 list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>'
 };
-[].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[e.dataset.ic]+'</svg>'});
-var KEY="claude_pfc_v1",CATS=["朝食","昼食","夕食","補食"],K4=["p","f","c","k"];
+function svg(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'}
+[].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML=svg(e.dataset.ic)});
+var KEY="claude_pfc_v1",CATS=["朝食","昼食","夕食","補食"],K4=["p","f","c","k"],TABS=["today","calc","my","hist","data"],curTab="today";
 try{screen.orientation.lock("portrait").catch(function(){})}catch(e){}
 function fix(d){
   d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];
@@ -576,7 +581,7 @@ $("gsave").onclick=function(){
 };
 
 function rCal(){
-  $("mlabel").textContent=vy+"年"+vm+"月";
+  $("mlabel").innerHTML='<i class="ic">'+svg("cal")+'</i>'+vy+"年"+vm+"月";
   var off=new Date(vy,vm-1,1).getDay();
   var rows=Math.ceil((off+new Date(vy,vm,0).getDate())/7);
   var today=ymd(new Date()),h="",i,d,s,has,dw,hc;
@@ -719,18 +724,32 @@ function closeLog(){$("logv").hidden=true;document.body.style.overflow=""}
 $("dlog").onclick=function(){rLog();var v=$("logv");v.hidden=false;v.scrollTop=0;document.body.style.overflow="hidden"};
 $("lclose").onclick=closeLog;
 
-function show(t){
-  sortE=false;sortM=false;editE=null;editM=null;closeLog();
-  ["today","calc","my","hist","data"].forEach(function(x){$("t-"+x).hidden=x!==t});
+function show(t,dir){
+  sortE=false;sortM=false;editE=null;editM=null;closeLog();curTab=t;
+  TABS.forEach(function(x){$("t-"+x).hidden=x!==t});
   [].forEach.call(document.querySelectorAll("#tabs button"),function(b){b.setAttribute("aria-selected",b.dataset.t===t?"true":"false")});
   if(t==="today")rToday();
   if(t==="hist"){vy=+cur.slice(0,4);vm=+cur.slice(5,7);rCal();bm("")}
   if(t==="my"){rMy();$("mymsg").textContent=""}
   if(t==="calc"){dest();qsync();csync()}
   if(t==="data")rData();
+  var s=$("t-"+t);s.classList.remove("sl","sr");
+  if(dir){void s.offsetWidth;s.classList.add(dir>0?"sl":"sr")}
   window.scrollTo(0,0);
 }
 $("tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(b.dataset.t)});
+var sx=0,sy=0,sok=false;
+document.addEventListener("touchstart",function(e){
+  var t=e.touches[0];sx=t.clientX;sy=t.clientY;
+  sok=e.touches.length===1&&$("logv").hidden&&!editE&&!editM&&!e.target.closest("input,textarea,select,#tabs");
+},{passive:true});
+document.addEventListener("touchend",function(e){
+  if(!sok)return;sok=false;
+  var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.8)return;
+  var i=TABS.indexOf(curTab)+(dx<0?1:-1);
+  if(i>=0&&i<TABS.length)show(TABS[i],dx<0?1:-1);
+},{passive:true});
 show("today");
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
