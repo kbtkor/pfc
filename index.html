@@ -55,7 +55,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .pb i{display:block;height:100%}
 .frow{display:flex;justify-content:space-between;gap:8px}
 .frow .tg{display:flex;align-items:baseline;justify-content:flex-end}
-.over{color:var(--err)}
 .cg{display:grid;grid-template-columns:4.6em repeat(4,minmax(0,1fr) 1.1em);gap:8px 0;font-size:14px;align-items:baseline;font-variant-numeric:tabular-nums}
 .cg .i{text-align:right}
 .cg .d{text-align:left}
@@ -117,6 +116,7 @@ summary{font-size:15px;font-weight:600}
 #scanmsg{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px;min-height:20px}
 #scanmsg.err{color:var(--err)}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+#calwrap{position:relative;overflow:hidden}
 .dow{font-size:12px;color:var(--sub);padding:4px 0}
 .day{padding:8px 0 6px;border:1px solid transparent;background:transparent;border-radius:12px;font-size:16px;line-height:1}
 .day span{display:block}
@@ -213,9 +213,11 @@ summary{font-size:15px;font-weight:600}
 
 <section id="t-hist" hidden>
 <div class="card">
+<div id="calzone">
 <div class="datebar" style="margin-top:0"><button id="mprev" aria-label="前の月">‹</button><div id="mlabel"></div><button id="mnext" aria-label="次の月">›</button></div>
 <div class="cal"><div class="dow">日</div><div class="dow">月</div><div class="dow">火</div><div class="dow">水</div><div class="dow">木</div><div class="dow">金</div><div class="dow">土</div></div>
-<div class="cal" id="cal"></div>
+<div id="calwrap"><div class="cal" id="cal"></div></div>
+</div>
 <button class="wide" id="mtoday" type="button">今日</button>
 </div>
 <div class="card">
@@ -504,9 +506,10 @@ function rToday(){
   dest();$("dlabel").textContent=lab(cur)+(cur===ymd(new Date())?" 今日":"");
   if(gShown!==cur){setGoals();gShown=cur}
   var G=goalFor(cur),l=D.entries[cur]||[],t=tot(l),h="";
-  KS.forEach(function(s){var g=G[s[0]]||0,v=t[s[0]];
+  KS.forEach(function(s){var g=G[s[0]]||0,v=t[s[0]],th=s[0]==="k"?250:25;
     h+='<div class="srow"><div class="shead"><b>'+s[1]+'</b><span><b class="cv">'+f1(v)+'</b><i class="un">'+s[2]+'</i></span></div>';
-    if(g){var o=v>g;h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(o?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(o?' class="over"':'')+'>'+(o?fmt(v-g)+s[2]+" 超過":"あと "+fmt(g-v)+s[2])+'</span><span class="tg"><span>目標 '+fmt(g)+'</span><i class="un">'+s[2]+'</i></span></div>'}
+    if(g){var d=v-g,a=Math.abs(d),cl=a>=th?"er":(a<=th*.4?"bl":"");
+      h+='<div class="pb"><i style="width:'+Math.min(100,v/g*100)+'%;background:var('+(d>=th?"--err":s[3])+')"></i></div><div class="rem frow"><span'+(cl?' class="'+cl+'"':'')+'>'+(d>0?fmt(d)+s[2]+" 超過":"あと "+fmt(-d)+s[2])+'</span><span class="tg"><span>目標 '+fmt(g)+'</span><i class="un">'+s[2]+'</i></span></div>'}
     h+='</div>'});
   if(!G.k&&!G.p&&!G.f&&!G.c)h+='<div class="rem">「目標設定」を開くと、残りが表示されます。</div>';
   $("sum").innerHTML=h;
@@ -576,17 +579,20 @@ $("gsave").onclick=function(){
   rToday();gm(lab(cur)+"以降の目標を保存しました。");
 };
 
-function rCal(){
-  $("mlabel").innerHTML='<i class="ic">'+svg("cal")+'</i>'+vy+"年"+vm+"月";
-  var off=new Date(vy,vm-1,1).getDay();
-  var rows=Math.ceil((off+new Date(vy,vm,0).getDate())/7);
+function calHtml(y,m){
+  var off=new Date(y,m-1,1).getDay();
+  var rows=Math.ceil((off+new Date(y,m,0).getDate())/7);
   var today=ymd(new Date()),h="",i,d,s,has,dw,hc;
   for(i=0;i<rows*7;i++){
-    d=new Date(vy,vm-1,1-off+i);s=ymd(d);has=(D.entries[s]||[]).length>0;
+    d=new Date(y,m-1,1-off+i);s=ymd(d);has=(D.entries[s]||[]).length>0;
     dw=d.getDay();hc=(dw===0||isHol(d))?" sun":(dw===6?" sat":"");
-    h+='<button class="day'+(d.getMonth()===vm-1?"":" out")+hc+(s===today?" today":"")+(s===cur?" sel":"")+'" data-d="'+s+'" aria-label="'+lab(s)+(has?" 記録あり":"")+'"><span>'+d.getDate()+'</span><i class="dot'+(has?" on":"")+'"></i></button>';
+    h+='<button class="day'+(d.getMonth()===m-1?"":" out")+hc+(s===today?" today":"")+(s===cur?" sel":"")+'" data-d="'+s+'" aria-label="'+lab(s)+(has?" 記録あり":"")+'"><span>'+d.getDate()+'</span><i class="dot'+(has?" on":"")+'"></i></button>';
   }
-  $("cal").innerHTML=h;
+  return h;
+}
+function rCal(){
+  $("mlabel").innerHTML='<i class="ic">'+svg("cal")+'</i>'+vy+"年"+vm+"月";
+  $("cal").innerHTML=calHtml(vy,vm);
 }
 $("cal").addEventListener("click",function(e){var b=e.target.closest(".day");if(b){cur=b.dataset.d;show("today")}});
 $("mprev").onclick=function(){vm--;if(vm<1){vm=12;vy--}rCal()};
@@ -736,7 +742,7 @@ function show(t){
 }
 $("tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(b.dataset.t)});
 
-var sx=0,sy=0,st=0,sok=false,busy=false,dg=null;
+var sx=0,sy=0,st=0,sok=false,smo=false,busy=false,dg=null,nc=0;
 function mkNb(dir){
   var i=TABS.indexOf(curTab)+dir;
   if(i<0||i>=TABS.length)return null;
@@ -747,24 +753,56 @@ function mkNb(dir){
   return t;
 }
 function clrNb(t){if(!t)return;var n=$("t-"+t);n.style.cssText="";n.hidden=true}
+function mkMonth(dir){
+  var y=vy,m=vm+dir;
+  if(m<1){m=12;y--}
+  if(m>12){m=1;y++}
+  var n=document.createElement("div");
+  n.className="cal";
+  n.innerHTML=calHtml(y,m);
+  n.style.cssText="position:absolute;left:0;right:0;top:0;transition:none";
+  $("calwrap").appendChild(n);
+  return{y:y,m:m,n:n};
+}
 function fin(go){
   $("t-"+curTab).style.cssText="";
   if(go){var t=dg.t;$("t-"+t).style.cssText="";show(t)}else clrNb(dg.t);
   dg=null;busy=false;
 }
+function endMonth(dx,v){
+  var c=$("cal"),n=dg.nb.n,W=$("calwrap").offsetWidth;
+  var go=Math.abs(dx)>60||(Math.abs(dx)>30&&v>.5);
+  busy=true;
+  c.style.transition="transform .22s ease-out";
+  n.style.transition="transform .22s ease-out";
+  c.style.transform="translateX("+(go?-dg.dir*W:0)+"px)";
+  n.style.transform="translateX("+(go?0:dg.dir*W)+"px)";
+  setTimeout(function(){
+    n.remove();c.style.cssText="";
+    if(go){vy=dg.nb.y;vm=dg.nb.m;rCal()}
+    dg=null;busy=false;
+  },230);
+}
 function endDrag(dx,dt){
   if(!dg)return;
+  var v=Math.abs(dx)/Math.max(dt,1);
+  nc=Date.now()+400;
+  if(dg.m){endMonth(dx,v);return}
   var W=window.innerWidth,c=$("t-"+curTab),n=dg.t?$("t-"+dg.t):null;
-  var go=!!n&&(Math.abs(dx)>80||(Math.abs(dx)>35&&Math.abs(dx)/Math.max(dt,1)>.5));
+  var go=!!n&&(Math.abs(dx)>80||(Math.abs(dx)>35&&v>.5));
   busy=true;
   c.style.transition="transform .22s ease-out";
   c.style.transform="translateX("+(go?-dg.dir*W:0)+"px)";
   if(n){n.style.transition="transform .22s ease-out";n.style.transform="translateX("+(go?0:dg.dir*W)+"px)"}
   setTimeout(function(){fin(go)},230);
 }
+document.addEventListener("click",function(e){
+  if(Date.now()<nc){e.stopPropagation();e.preventDefault()}
+},true);
 document.addEventListener("touchstart",function(e){
   var t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();
   sok=!busy&&e.touches.length===1&&$("logv").hidden&&!editE&&!editM&&!e.target.closest("input,textarea,select,#tabs");
+  smo=curTab==="hist"&&!!e.target.closest("#calzone");
 },{passive:true});
 document.addEventListener("touchmove",function(e){
   if(!sok)return;
@@ -772,10 +810,18 @@ document.addEventListener("touchmove",function(e){
   if(!dg){
     if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
     if(Math.abs(dx)<Math.abs(dy)*1.2){sok=false;return}
-    dg={dir:0,t:null};
+    dg={dir:0,t:null,m:smo,nb:null};
   }
   e.preventDefault();
-  var dir=dx<0?1:-1,W=window.innerWidth;
+  var dir=dx<0?1:-1;
+  if(dg.m){
+    var Wm=$("calwrap").offsetWidth;
+    if(dir!==dg.dir){if(dg.nb)dg.nb.n.remove();dg.dir=dir;dg.nb=mkMonth(dir)}
+    $("cal").style.transform="translateX("+dx+"px)";
+    dg.nb.n.style.transform="translateX("+(dx+dir*Wm)+"px)";
+    return;
+  }
+  var W=window.innerWidth;
   if(dir!==dg.dir){clrNb(dg.t);dg.dir=dir;dg.t=mkNb(dir)}
   $("t-"+curTab).style.transform="translateX("+(dg.t?dx:dx*.3)+"px)";
   if(dg.t)$("t-"+dg.t).style.transform="translateX("+(dx+dir*W)+"px)";
