@@ -179,6 +179,9 @@ summary{font-size:15px;font-weight:600}
 </section>
 
 <section id="t-calc" hidden>
+<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px"><i class="ic" data-ic="tag"></i>名前</b>
+<input class="fi" id="ename" placeholder="名前(例:Big Mac)" autocomplete="off">
+<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div></div>
 <div class="card"><b style="font-size:15px;display:block;margin-bottom:8px"><i class="ic" data-ic="scan"></i>ラベルから読み取る</b>
 <textarea class="fi" id="scan" rows="3" placeholder="ここに栄養成分貼り付け" autocomplete="off"></textarea>
 <div id="scanmsg" aria-live="polite"></div></div>
@@ -193,8 +196,6 @@ summary{font-size:15px;font-weight:600}
 <div id="ratio"></div>
 <div class="card" id="calcdest">
 <div class="rem" style="margin-bottom:8px">記録先: <span class="dt" id="dest"></span></div>
-<input class="fi" id="ename" placeholder="名前(例:Big Mac)" autocomplete="off">
-<div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div>
 <button class="wide" id="addlog">この日に記録</button>
 <button class="wide" id="addother" type="button">他の日に記録</button>
 <div id="odbox" hidden style="margin-top:12px"><input class="fi" type="date" id="odate"><button class="wide" id="odgo" type="button" style="margin-top:8px">この日付に記録</button></div>
@@ -255,7 +256,8 @@ target:'<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M12 12m-5 0
 edit:'<path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/>',
 scan:'<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v1"/><path d="M16 20h2a2 2 0 0 0 2 -2v-1"/><path d="M5 12l14 0"/>',
 cloud:'<path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12l0 9"/>',
-list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>'
+list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>',
+tag:'<path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/>'
 };
 function svg(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'}
 [].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML=svg(e.dataset.ic)});
