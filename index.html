@@ -27,6 +27,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 #tabs .ic svg{width:24px;height:24px}
 .ic{display:inline-flex;vertical-align:-4px;margin-right:6px}
 .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tt{font-size:16px;font-weight:600;display:block;margin-bottom:8px}
+.tt .ic,#scanbtn .ic{vertical-align:-3px}
+.tt .ic svg,#scanbtn .ic svg{width:18px;height:18px}
+#scanbtn{margin:0 0 12px;font-size:16px;font-weight:600}
 .lh button[aria-pressed="true"],.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 #bout{border-color:var(--p)}
 #bin{border-color:var(--f)}
@@ -179,10 +183,11 @@ summary{font-size:15px;font-weight:600}
 </section>
 
 <section id="t-calc" hidden>
-<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px"><i class="ic" data-ic="tag"></i>名前</b>
-<input class="fi" id="ename" placeholder="名前(例:Big Mac)" autocomplete="off">
+<div class="card"><b class="tt"><i class="ic" data-ic="tag"></i>名前</b>
+<input class="fi" id="ename" placeholder="例:Big Mac" autocomplete="off">
 <div class="qrow crow"><button type="button" data-c="朝食" aria-pressed="false">朝食</button><button type="button" data-c="昼食" aria-pressed="false">昼食</button><button type="button" data-c="夕食" aria-pressed="false">夕食</button><button type="button" data-c="補食" aria-pressed="false">補食</button></div></div>
-<div class="card"><b style="font-size:15px;display:block;margin-bottom:8px"><i class="ic" data-ic="scan"></i>ラベルから読み取る</b>
+<button class="wide" id="scanbtn" type="button" aria-expanded="false"><i class="ic" data-ic="scan"></i>ラベルから読み取る</button>
+<div class="card" id="scanbox" hidden>
 <textarea class="fi" id="scan" rows="3" placeholder="ここに栄養成分貼り付け" autocomplete="off"></textarea>
 <div id="scanmsg" aria-live="polite"></div></div>
 <div class="row p"><label for="p">たんぱく質 (P)</label><input id="p" type="text" inputmode="decimal" autocomplete="off"><span class="u">g</span></div>
@@ -432,6 +437,11 @@ function parse(){
   calc(null);
 }
 scan.addEventListener("input",parse);
+$("scanbtn").onclick=function(){
+  var b=$("scanbox");b.hidden=!b.hidden;
+  this.setAttribute("aria-expanded",b.hidden?"false":"true");
+  if(!b.hidden)scan.focus();
+};
 K4.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
 function clr(){K4.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""}
 function csync(){
