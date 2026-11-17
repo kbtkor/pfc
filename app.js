@@ -327,7 +327,7 @@ function hkTot(){var t=tot(D.entries[cur]||[]);K4.forEach(function(k){t[k]=r1(t[
 function hkTxt(o,sg){
   return["p","f","c"].map(function(k){return k.toUpperCase()+" "+(sg&&o[k]>0?"+":"")+fmt(o[k])}).join(" / ")+" / "+(sg&&o.k>0?"+":"")+fmt(o.k)+" kcal";
 }
-var HKB='<button class="wide" type="button" data-hk="send" style="background:#fff;color:#c0392b">送信</button>';
+var HKB='<button class="wide" type="button" data-hk="send" style="background:#1c2420;color:#fff">送信</button>';
 function rHk(){
   var t=hkTot(),s=D.sent[cur],h='<b class="tt"><i class="ic">'+svg("heartbeat")+'</i>ヘルスケアへ送る</b>',has=t.p||t.f||t.c||t.k;
   if(!s){
