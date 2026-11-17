@@ -348,7 +348,7 @@ function hkSend(){
   K4.forEach(function(k){o[k]=r1(t[k]-s[k]);if(o[k]<0)dec=true;if(o[k]>0)inc=true});
   if(dec||!inc)return;
   var now=new Date(),tm="12:00:00";
-  if(cur===ymd(now)&&now.getHours()<12)tm=p2(now.getHours())+":"+p2(now.getMinutes())+":00";
+  if(cur===ymd(now))tm=p2(now.getHours())+":"+p2(now.getMinutes())+":"+p2(now.getSeconds());
   try{localStorage.setItem(PK,JSON.stringify({date:cur,t:t}))}catch(e){}
   var body={date:cur+"T"+tm,p:o.p,f:o.f,c:o.c,k:o.k};
   location.href="shortcuts://run-shortcut?name="+encodeURIComponent("PFC送信")+"&input=text&text="+encodeURIComponent(JSON.stringify(body));
