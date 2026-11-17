@@ -11,7 +11,8 @@ edit:'<path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><pat
 scan:'<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v1"/><path d="M16 20h2a2 2 0 0 0 2 -2v-1"/><path d="M5 12l14 0"/>',
 cloud:'<path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12l0 9"/>',
 list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>',
-tag:'<path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/>'
+tag:'<path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/>',
+heartbeat:'<path d="M19.5 13.572l-7.5 7.428l-2.896 -2.868m-6.117 -8.104a5 5 0 0 1 9.013 -3.022a5 5 0 1 1 7.5 6.572"/><path d="M3 13h2l2 3l2 -6l1 3h3"/>'
 };
 function svg(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'}
 [].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML=svg(e.dataset.ic)});
@@ -326,16 +327,17 @@ function hkTot(){var t=tot(D.entries[cur]||[]);K4.forEach(function(k){t[k]=r1(t[
 function hkTxt(o,sg){
   return["p","f","c"].map(function(k){return k.toUpperCase()+" "+(sg&&o[k]>0?"+":"")+fmt(o[k])}).join(" / ")+" / "+(sg&&o.k>0?"+":"")+fmt(o.k)+" kcal";
 }
+var HKB='<button class="wide" type="button" data-hk="send" style="background:#fff;color:#c0392b">送信</button>';
 function rHk(){
-  var t=hkTot(),s=D.sent[cur],h='<b class="tt">ヘルスケア</b>',has=t.p||t.f||t.c||t.k;
+  var t=hkTot(),s=D.sent[cur],h='<b class="tt"><i class="ic">'+svg("heartbeat")+'</i>ヘルスケアへ送る</b>',has=t.p||t.f||t.c||t.k;
   if(!s){
-    h+=has?'<div class="rem">未送信:'+hkTxt(t)+'</div><button class="wide" type="button" data-hk="send">ヘルスケアへ送る</button>'
+    h+=has?'<div class="rem">未送信:'+hkTxt(t)+'</div>'+HKB
     :'<div class="rem">この日は記録がないため、送るものがありません。</div>';
   }else{
     var d={},dec=false,inc=false;
     K4.forEach(function(k){d[k]=r1(t[k]-s[k]);if(d[k]<0)dec=true;if(d[k]>0)inc=true});
     if(dec)h+='<div class="bad">送信後に、記録が減った項目があります。ヘルスケアアプリ側を現在の合計に合わせて修正してから、下のボタンを押してください。</div><div class="rem">送信済み:'+hkTxt(s)+'</div><button class="wide" type="button" data-hk="sync">送信済みを現在の合計に合わせる</button>';
-    else if(inc)h+='<div class="rem">送信済み:'+hkTxt(s)+'</div><div class="rem">増えた分:'+hkTxt(d,1)+'</div><button class="wide" type="button" data-hk="send">増えた分を送る</button>';
+    else if(inc)h+='<div class="rem">送信済み:'+hkTxt(s)+'</div><div class="rem">増えた分:'+hkTxt(d,1)+'</div>'+HKB;
     else h+='<div class="rem">送信済み:'+hkTxt(s)+'</div>';
     h+='<button type="button" data-hk="reset" style="width:100%;margin-top:8px">送信記録をリセット</button>';
   }
