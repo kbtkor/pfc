@@ -18,7 +18,7 @@ function svg(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</sv
 var KEY="claude_pfc_v1",CATS=["朝食","昼食","夕食","補食"],K4=["p","f","c","k"],TABS=["today","calc","my","hist","data"],curTab="today";
 try{screen.orientation.lock("portrait").catch(function(){})}catch(e){}
 function fix(d){
-  d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];
+  d.goal=d.goal||{};d.goalHist=d.goalHist||{};d.entries=d.entries||{};d.my=d.my||[];d.sent=d.sent||{};
   Object.keys(d.entries).forEach(function(k){(d.entries[k]||[]).forEach(function(e){if(e.cat==="間食")e.cat="補食"})});
   return d;
 }
@@ -279,6 +279,7 @@ function rToday(){
   $("elist").innerHTML=l.length?l.map(function(e,i){
     if(editE===String(e.id))return form(e,true);
     return'<div class="item"><div class="n"><b>'+(e.cat?'<i class="tag" data-c="'+esc(e.cat)+'">'+esc(e.cat)+'</i>':'')+esc(e.name||"名称なし")+'</b>'+info(e)+'</div>'+btns(e,i,l.length,sortE,"","del")+'</div>'}).join(""):'<div class="rem">この日の記録はまだありません。「計算」または「Myリスト」から記録できます。</div>';
+  rHk();
 }
 $("esort").onclick=function(){sortE=!sortE;editE=null;rToday()};
 $("elist").addEventListener("change",fchange);
@@ -316,6 +317,62 @@ $("elist").addEventListener("click",function(e){
 $("dprev").onclick=function(){cur=shift(cur,-1);editE=null;rToday()};
 $("dnext").onclick=function(){cur=shift(cur,1);editE=null;rToday()};
 $("dlabel").onclick=function(){cur=ymd(new Date());editE=null;rToday()};
+
+var PK="claude_pfc_pend",hk=document.createElement("div");
+hk.className="card";hk.id="hk";
+var hkp=$("elist").parentNode;hkp.parentNode.insertBefore(hk,hkp.nextSibling);
+function r1(n){return Math.round(n*10)/10}
+function hkTot(){var t=tot(D.entries[cur]||[]);K4.forEach(function(k){t[k]=r1(t[k])});return t}
+function hkTxt(o,sg){
+  return["p","f","c"].map(function(k){return k.toUpperCase()+" "+(sg&&o[k]>0?"+":"")+fmt(o[k])}).join(" / ")+" / "+(sg&&o.k>0?"+":"")+fmt(o.k)+" kcal";
+}
+function rHk(){
+  var t=hkTot(),s=D.sent[cur],h='<b class="tt">ヘルスケア</b>',has=t.p||t.f||t.c||t.k;
+  if(!s){
+    h+=has?'<div class="rem">未送信:'+hkTxt(t)+'</div><button class="wide" type="button" data-hk="send">ヘルスケアへ送る</button>'
+    :'<div class="rem">この日は記録がないため、送るものがありません。</div>';
+  }else{
+    var d={},dec=false,inc=false;
+    K4.forEach(function(k){d[k]=r1(t[k]-s[k]);if(d[k]<0)dec=true;if(d[k]>0)inc=true});
+    if(dec)h+='<div class="bad">送信後に、記録が減った項目があります。ヘルスケアアプリ側を現在の合計に合わせて修正してから、下のボタンを押してください。</div><div class="rem">送信済み:'+hkTxt(s)+'</div><button class="wide" type="button" data-hk="sync">送信済みを現在の合計に合わせる</button>';
+    else if(inc)h+='<div class="rem">送信済み:'+hkTxt(s)+'</div><div class="rem">増えた分:'+hkTxt(d,1)+'</div><button class="wide" type="button" data-hk="send">増えた分を送る</button>';
+    else h+='<div class="rem">送信済み:'+hkTxt(s)+'</div>';
+    h+='<button type="button" data-hk="reset" style="width:100%;margin-top:8px">送信記録をリセット</button>';
+  }
+  hk.innerHTML=h;
+}
+function hkSend(){
+  var t=hkTot(),s=D.sent[cur]||{p:0,f:0,c:0,k:0},o={},dec=false,inc=false;
+  K4.forEach(function(k){o[k]=r1(t[k]-s[k]);if(o[k]<0)dec=true;if(o[k]>0)inc=true});
+  if(dec||!inc)return;
+  var now=new Date(),tm="12:00:00";
+  if(cur===ymd(now)&&now.getHours()<12)tm=p2(now.getHours())+":"+p2(now.getMinutes())+":00";
+  try{localStorage.setItem(PK,JSON.stringify({date:cur,t:t}))}catch(e){}
+  var body={date:cur+"T"+tm,p:o.p,f:o.f,c:o.c,k:o.k};
+  location.href="shortcuts://run-shortcut?name="+encodeURIComponent("PFC送信")+"&input=text&text="+encodeURIComponent(JSON.stringify(body));
+}
+function hkAsk(){
+  var s=null,p;
+  try{s=localStorage.getItem(PK)}catch(e){}
+  if(!s)return;
+  try{localStorage.removeItem(PK)}catch(e){}
+  try{p=JSON.parse(s)}catch(e){return}
+  if(!p||!p.date||!p.t)return;
+  if(confirm(lab(p.date)+"の分を、ヘルスケアに送れましたか?\n「OK」=送れた / 「キャンセル」=送れていない")){
+    D.sent[p.date]=p.t;save();
+  }
+  rHk();
+}
+hk.addEventListener("click",function(e){
+  var b=e.target.closest("button");if(!b)return;
+  var a=b.dataset.hk;
+  if(a==="send")hkSend();
+  else if(a==="sync"){D.sent[cur]=hkTot();save();rHk()}
+  else if(a==="reset"){
+    if(confirm("この日の送信記録を消します。ヘルスケアに入っているデータは消えません。よろしいですか?")){delete D.sent[cur];save();rHk()}
+  }
+});
+document.addEventListener("visibilitychange",function(){if(!document.hidden)setTimeout(hkAsk,400)});
 
 var gAuto=null;
 function gm(t,e){say("gmsg",t,e)}
@@ -593,5 +650,6 @@ document.addEventListener("touchend",function(e){
 },{passive:true});
 document.addEventListener("touchcancel",function(){sok=false;endDrag(0,1)},{passive:true});
 show("today");
+hkAsk();
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
