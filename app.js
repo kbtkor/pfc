@@ -12,7 +12,8 @@ scan:'<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 0 2 2h2"/><pa
 cloud:'<path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12l0 9"/>',
 list:'<path d="M9 6l11 0"/><path d="M9 12l11 0"/><path d="M9 18l11 0"/><path d="M5 6l0 .01"/><path d="M5 12l0 .01"/><path d="M5 18l0 .01"/>',
 tag:'<path d="M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z"/>',
-heartbeat:'<path d="M19.5 13.572l-7.5 7.428l-2.896 -2.868m-6.117 -8.104a5 5 0 0 1 9.013 -3.022a5 5 0 1 1 7.5 6.572"/><path d="M3 13h2l2 3l2 -6l1 3h3"/>'
+heartbeat:'<path d="M19.5 13.572l-7.5 7.428l-2.896 -2.868m-6.117 -8.104a5 5 0 0 1 9.013 -3.022a5 5 0 1 1 7.5 6.572"/><path d="M3 13h2l2 3l2 -6l1 3h3"/>',
+sparkles:'<path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6"/>'
 };
 function svg(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'}
 [].forEach.call(document.querySelectorAll("[data-ic]"),function(e){e.innerHTML=svg(e.dataset.ic)});
@@ -192,6 +193,88 @@ $("scanbtn").onclick=function(){
   this.setAttribute("aria-expanded",b.hidden?"false":"true");
   if(!b.hidden)scan.focus();
 };
+
+var GK="claude_pfc_gkey",GMODEL="gemini-flash-latest",aiBusy=false;
+var aib=document.createElement("button");
+aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-expanded","false");
+aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
+var aix=document.createElement("div");
+aix.className="card";aix.id="aibox";aix.hidden=true;
+aix.innerHTML='<input class="fi" id="aiq" placeholder="例:牛丼 並盛" autocomplete="off">'
++'<div style="display:flex;gap:8px;margin-top:8px"><button id="aigo" type="button" style="flex:1">検索</button><button id="aikey" type="button">キー設定</button></div>'
++'<div id="aikbox" hidden style="margin-top:8px"><input class="fi" id="aik" type="password" placeholder="APIキーを貼り付け" autocomplete="off"><button id="aiks" type="button" style="width:100%;margin-top:8px">キーを保存</button></div>'
++'<div id="aimsg" class="rem" style="margin-top:8px" aria-live="polite"></div>';
+var sbx=$("scanbox");sbx.parentNode.insertBefore(aib,sbx.nextSibling);aib.parentNode.insertBefore(aix,aib.nextSibling);
+function aim(t,e){say("aimsg",t,e)}
+function getKey(){try{return localStorage.getItem(GK)||""}catch(e){return""}}
+aib.onclick=function(){
+  aix.hidden=!aix.hidden;
+  this.setAttribute("aria-expanded",aix.hidden?"false":"true");
+  if(!aix.hidden)$("aiq").focus();
+};
+$("aikey").onclick=function(){
+  var b=$("aikbox");b.hidden=!b.hidden;
+  if(!b.hidden){aim(getKey()?"キーは保存済みです。新しいキーを保存すると置き換わります。":"");$("aik").focus()}
+};
+$("aiks").onclick=function(){
+  var v=$("aik").value.trim();
+  if(!v){aim("キーを貼り付けてください。",1);return}
+  try{localStorage.setItem(GK,v)}catch(e){aim("キーを保存できませんでした。",1);return}
+  $("aik").value="";$("aikbox").hidden=true;aim("キーを保存しました。");
+};
+function aiAsk(){
+  if(aiBusy)return;
+  var q=$("aiq").value.trim();
+  if(!q){aim("食品名と量を入力してください。",1);return}
+  var key=getKey();
+  if(!key){$("aikbox").hidden=false;aim("先にAPIキーを保存してください。",1);return}
+  aiBusy=true;
+  var go=$("aigo");go.textContent="検索中…";aim("");
+  var prompt="次の食品の栄養成分を、日本で一般的な数値で推定してください。\n食品名と量: "+q+"\n量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で返してください。炭水化物は、食物繊維を含む値にしてください。";
+  var body={
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{
+      temperature:0,
+      responseMimeType:"application/json",
+      responseSchema:{type:"OBJECT",properties:{p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"}},required:["p","f","c"]}
+    }
+  };
+  fetch("https://generativelanguage.googleapis.com/v1beta/models/"+GMODEL+":generateContent",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":key},
+    body:JSON.stringify(body)
+  }).then(function(r){
+    return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d}});
+  }).then(function(x){
+    if(!x.ok){
+      var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
+      if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
+      if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
+      if(x.st===404)throw{m:"モデルが見つかりません("+GMODEL+")。"+det};
+      throw{m:"検索できませんでした(エラー "+x.st+")。"+det};
+    }
+    var d=x.d,parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+    var t=parts.map(function(p){return p.thought?"":(p.text||"")}).join("").replace(/```json|```/g,"").trim();
+    var o;
+    try{o=JSON.parse(t)}catch(e){throw{m:"結果を読み取れませんでした。もう一度検索してください。"}}
+    var v={},ok=true;
+    ["p","f","c"].forEach(function(k){var n=Number(o&&o[k]);if(!isFinite(n)||n<0)ok=false;v[k]=Math.round(n*10)/10});
+    if(!ok)throw{m:"結果を読み取れませんでした。もう一度検索してください。"};
+    K4.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;
+    ["p","f","c"].forEach(function(k){el[k].value=fmt(v[k])});
+    calc(null);
+    var en=$("ename");
+    if(!en.value.trim())en.value=q;
+    aim("AIの推定値です。ラベルと合っているか確認してください。");
+  }).catch(function(e){
+    aim(e&&e.m?e.m:"通信できませんでした。インターネット接続を確認してください。",1);
+  }).then(function(){
+    aiBusy=false;go.textContent="検索";
+  });
+}
+$("aigo").onclick=aiAsk;
+$("aiq").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();aiAsk()}});
+
 K4.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
 function clr(){K4.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""}
 function csync(){
