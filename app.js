@@ -194,7 +194,7 @@ $("scanbtn").onclick=function(){
   if(!b.hidden)scan.focus();
 };
 
-var GK="claude_pfc_gkey",GMODEL="gemini-flash-latest",aiBusy=false;
+var GK="claude_pfc_gkey",GMODELS=["gemini-flash-lite-latest","gemini-flash-latest"],aiBusy=false;
 var aib=document.createElement("button");
 aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-expanded","false");
 aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
@@ -224,6 +224,21 @@ $("aiks").onclick=function(){
   try{localStorage.setItem(GK,v)}catch(e){aim("キーを保存できませんでした。",1);return}
   $("aik").value="";$("aikbox").hidden=true;aim("キーを保存しました。");
 };
+function callG(model,key,body){
+  return fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":key},
+    body:JSON.stringify(body)
+  }).then(function(r){
+    return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d,model:model}});
+  });
+}
+function askG(i,key,body){
+  return callG(GMODELS[i],key,body).then(function(x){
+    if(!x.ok&&i<GMODELS.length-1&&(x.st===503||x.st===500||x.st===404||x.st===429))return askG(i+1,key,body);
+    return x;
+  });
+}
 function aiAsk(){
   if(aiBusy)return;
   var q=$("aiq").value.trim();
@@ -243,21 +258,14 @@ function aiAsk(){
     }
   };
   var req;
-  try{
-    req=fetch("https://generativelanguage.googleapis.com/v1beta/models/"+GMODEL+":generateContent",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify(body)
-    });
-  }catch(e){req=Promise.reject(e)}
-  req.then(function(r){
-    return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d}});
-  }).then(function(x){
+  try{req=askG(0,key,body)}catch(e){req=Promise.reject(e)}
+  req.then(function(x){
     if(!x.ok){
       var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
+      if(x.st===503||x.st===500)throw{m:"Geminiが混雑しています。少し待ってから、もう一度お試しください。"};
       if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
       if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
-      if(x.st===404)throw{m:"モデルが見つかりません("+GMODEL+")。"+det};
+      if(x.st===404)throw{m:"モデルが見つかりません("+x.model+")。"+det};
       throw{m:"検索できませんでした(エラー "+x.st+")。"+det};
     }
     var d=x.d,parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
