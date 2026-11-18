@@ -18,9 +18,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 .ic{display:inline-flex;vertical-align:-4px;margin-right:6px}
 .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tt{font-size:16px;font-weight:600;display:block;margin-bottom:8px}
-.tt .ic,#scanbtn .ic{vertical-align:-3px}
-.tt .ic svg,#scanbtn .ic svg{width:18px;height:18px}
-#scanbtn{margin:0 0 12px;font-size:16px;font-weight:600}
+.tt .ic,#scanbtn .ic,#aibtn .ic{vertical-align:-3px}
+.tt .ic svg,#scanbtn .ic svg,#aibtn .ic svg{width:18px;height:18px}
+#scanbtn,#aibtn{margin:0 0 12px;font-size:16px;font-weight:600}
 .lh button[aria-pressed="true"],.qrow button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 #bout{border-color:var(--p)}
 #bin{border-color:var(--f)}
@@ -29,6 +29,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 #addmy{background:var(--btn-y);border-color:var(--btn-y);color:#fff}
 #addother,#odgo,#odate{background:var(--btn-b);border-color:var(--btn-b);color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+#aibox{border-color:var(--tb,var(--line))}
 .fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
 .fi.auto{color:var(--sub);border-style:dashed}
 #odate{display:block;width:100%;min-width:0;max-width:100%;margin:0;min-height:44px;-webkit-appearance:none;appearance:none;text-align:center;-webkit-text-fill-color:#fff}
