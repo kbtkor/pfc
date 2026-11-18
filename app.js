@@ -207,6 +207,7 @@ aix.innerHTML='<input class="fi" id="aiq" placeholder="例:牛丼 並盛" autoco
 var sbx=$("scanbox");sbx.parentNode.insertBefore(aib,sbx.nextSibling);aib.parentNode.insertBefore(aix,aib.nextSibling);
 function aim(t,e){say("aimsg",t,e)}
 function getKey(){try{return localStorage.getItem(GK)||""}catch(e){return""}}
+function badKey(k){return /[^\x21-\x7E]/.test(k)}
 aib.onclick=function(){
   aix.hidden=!aix.hidden;
   this.setAttribute("aria-expanded",aix.hidden?"false":"true");
@@ -219,6 +220,7 @@ $("aikey").onclick=function(){
 $("aiks").onclick=function(){
   var v=$("aik").value.trim();
   if(!v){aim("キーを貼り付けてください。",1);return}
+  if(badKey(v)){aim("キーに使えない文字(全角文字・空白・改行など)が含まれています。キーだけをコピーして、もう一度貼り付けてください。",1);return}
   try{localStorage.setItem(GK,v)}catch(e){aim("キーを保存できませんでした。",1);return}
   $("aik").value="";$("aikbox").hidden=true;aim("キーを保存しました。");
 };
@@ -228,6 +230,7 @@ function aiAsk(){
   if(!q){aim("食品名と量を入力してください。",1);return}
   var key=getKey();
   if(!key){$("aikbox").hidden=false;aim("先にAPIキーを保存してください。",1);return}
+  if(badKey(key)){$("aikbox").hidden=false;aim("保存されているキーに使えない文字が含まれています。「キー設定」から、もう一度保存してください。",1);return}
   aiBusy=true;
   var go=$("aigo");go.textContent="検索中…";aim("");
   var prompt="次の食品の栄養成分を、日本で一般的な数値で推定してください。\n食品名と量: "+q+"\n量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で返してください。炭水化物は、食物繊維を含む値にしてください。";
@@ -239,11 +242,15 @@ function aiAsk(){
       responseSchema:{type:"OBJECT",properties:{p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"}},required:["p","f","c"]}
     }
   };
-  fetch("https://generativelanguage.googleapis.com/v1beta/models/"+GMODEL+":generateContent",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","x-goog-api-key":key},
-    body:JSON.stringify(body)
-  }).then(function(r){
+  var req;
+  try{
+    req=fetch("https://generativelanguage.googleapis.com/v1beta/models/"+GMODEL+":generateContent",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-goog-api-key":key},
+      body:JSON.stringify(body)
+    });
+  }catch(e){req=Promise.reject(e)}
+  req.then(function(r){
     return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d}});
   }).then(function(x){
     if(!x.ok){
@@ -267,7 +274,8 @@ function aiAsk(){
     if(!en.value.trim())en.value=q;
     aim("AIの推定値です。ラベルと合っているか確認してください。");
   }).catch(function(e){
-    aim(e&&e.m?e.m:"通信できませんでした。インターネット接続を確認してください。",1);
+    if(e&&e.m){aim(e.m,1);return}
+    aim("通信できませんでした("+(e&&e.name?e.name:"エラー")+": "+(e&&e.message?String(e.message).slice(0,80):"詳細なし")+")。",1);
   }).then(function(){
     aiBusy=false;go.textContent="検索";
   });
