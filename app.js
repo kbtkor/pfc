@@ -194,7 +194,7 @@ $("scanbtn").onclick=function(){
   if(!b.hidden)scan.focus();
 };
 
-var GK="claude_pfc_gkey",GM_LITE="gemini-flash-lite-latest",GM_FLASH="gemini-flash-latest",aiBusy=false;
+var GK="claude_pfc_gkey",GM_LITE="gemini-flash-lite-latest",GM_FLASH="gemini-flash-latest",GM_WEB=["gemini-2.5-flash","gemini-2.5-flash-lite"],aiBusy=false;
 var aib=document.createElement("button");
 aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-expanded","false");
 aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
@@ -266,13 +266,14 @@ function aiAsk(){
       }
     };
   }
-  var models=web?[GM_FLASH,GM_LITE]:[GM_LITE,GM_FLASH];
+  var models=web?GM_WEB:[GM_LITE,GM_FLASH];
   var req;
   try{req=askG(models,0,key,body)}catch(e){req=Promise.reject(e)}
   req.then(function(x){
     if(!x.ok){
       var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
       if(x.st===503||x.st===500)throw{m:"Geminiが混雑しています。少し待ってから、もう一度お試しください。"};
+      if(web&&(x.st===429||x.st===404))throw{m:"ウェブ検索を使えませんでした("+x.model+"・エラー "+x.st+")。無料枠では使えない可能性があります。チェックを外して検索してください。"};
       if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
       if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
       if(x.st===404)throw{m:"モデルが見つかりません("+x.model+")。"+det};
