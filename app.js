@@ -194,7 +194,7 @@ $("scanbtn").onclick=function(){
   if(!b.hidden)scan.focus();
 };
 
-var GK="claude_pfc_gkey",GM_LITE="gemini-flash-lite-latest",GM_FLASH="gemini-flash-latest",GM_WEB=["gemini-2.5-flash","gemini-2.5-flash-lite"],aiBusy=false;
+var GK="claude_pfc_gkey",GMODELS=["gemini-flash-lite-latest","gemini-flash-latest"],aiBusy=false;
 var aib=document.createElement("button");
 aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-expanded","false");
 aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
@@ -202,7 +202,6 @@ var aix=document.createElement("div");
 aix.className="card";aix.id="aibox";aix.hidden=true;
 aix.innerHTML='<input class="fi" id="aiq" placeholder="例:牛丼 並盛" autocomplete="off">'
 +'<div style="display:flex;gap:8px;margin-top:8px"><button id="aigo" type="button" style="flex:1">検索</button><button id="aikey" type="button">キー設定</button></div>'
-+'<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="aiweb" style="width:20px;height:20px;flex:none"><span>ウェブ検索を使う<span class="rem">(外食・商品向け。時間がかかります)</span></span></label>'
 +'<div id="aikbox" hidden style="margin-top:8px"><input class="fi" id="aik" type="password" placeholder="APIキーを貼り付け" autocomplete="off"><button id="aiks" type="button" style="width:100%;margin-top:8px">キーを保存</button></div>'
 +'<div id="aimsg" class="rem" style="margin-top:8px" aria-live="polite"></div>';
 var sbx=$("scanbox");sbx.parentNode.insertBefore(aib,sbx.nextSibling);aib.parentNode.insertBefore(aix,aib.nextSibling);
@@ -234,9 +233,9 @@ function callG(model,key,body){
     return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d,model:model}});
   });
 }
-function askG(models,i,key,body){
-  return callG(models[i],key,body).then(function(x){
-    if(!x.ok&&i<models.length-1&&(x.st===503||x.st===500||x.st===404||x.st===429))return askG(models,i+1,key,body);
+function askG(i,key,body){
+  return callG(GMODELS[i],key,body).then(function(x){
+    if(!x.ok&&i<GMODELS.length-1&&(x.st===503||x.st===500||x.st===404||x.st===429))return askG(i+1,key,body);
     return x;
   });
 }
@@ -247,41 +246,30 @@ function aiAsk(){
   var key=getKey();
   if(!key){$("aikbox").hidden=false;aim("先にAPIキーを保存してください。",1);return}
   if(badKey(key)){$("aikbox").hidden=false;aim("保存されているキーに使えない文字が含まれています。「キー設定」から、もう一度保存してください。",1);return}
-  var web=$("aiweb").checked;
   aiBusy=true;
-  var go=$("aigo");go.textContent="検索中…";
-  aim(web?"ウェブで調べています。少し時間がかかります。":"");
-  var prompt,body;
-  if(web){
-    prompt="次の食品の栄養成分を調べてください。\n食品名と量: "+q+"\nお店のメニューや商品名の場合は、Google検索で公式サイトなどの公表値を調べ、見つかった公表値をそのまま使ってください。見つからないときや、一般的な食品の場合は、日本で一般的な数値で推定してください。量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で、次の形式のJSONだけで返してください。説明は書かないでください。\n{\"p\":0,\"f\":0,\"c\":0}";
-    body={contents:[{parts:[{text:prompt}]}],tools:[{google_search:{}}],generationConfig:{temperature:0}};
-  }else{
-    prompt="次の食品の栄養成分を、日本で一般的な数値で推定してください。\n食品名と量: "+q+"\n量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で返してください。炭水化物は、食物繊維を含む値にしてください。";
-    body={
-      contents:[{parts:[{text:prompt}]}],
-      generationConfig:{
-        temperature:0,
-        responseMimeType:"application/json",
-        responseSchema:{type:"OBJECT",properties:{p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"}},required:["p","f","c"]}
-      }
-    };
-  }
-  var models=web?GM_WEB:[GM_LITE,GM_FLASH];
+  var go=$("aigo");go.textContent="検索中…";aim("");
+  var prompt="次の食品の栄養成分を、日本で一般的な数値で推定してください。\n食品名と量: "+q+"\n量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で返してください。炭水化物は、食物繊維を含む値にしてください。";
+  var body={
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{
+      temperature:0,
+      responseMimeType:"application/json",
+      responseSchema:{type:"OBJECT",properties:{p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"}},required:["p","f","c"]}
+    }
+  };
   var req;
-  try{req=askG(models,0,key,body)}catch(e){req=Promise.reject(e)}
+  try{req=askG(0,key,body)}catch(e){req=Promise.reject(e)}
   req.then(function(x){
     if(!x.ok){
       var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
       if(x.st===503||x.st===500)throw{m:"Geminiが混雑しています。少し待ってから、もう一度お試しください。"};
-      if(web&&(x.st===429||x.st===404))throw{m:"ウェブ検索を使えませんでした("+x.model+"・エラー "+x.st+")。無料枠では使えない可能性があります。チェックを外して検索してください。"};
       if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
       if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
       if(x.st===404)throw{m:"モデルが見つかりません("+x.model+")。"+det};
       throw{m:"検索できませんでした(エラー "+x.st+")。"+det};
     }
-    var d=x.d,cd=d&&d.candidates&&d.candidates[0],parts=(cd&&cd.content&&cd.content.parts)||[];
+    var d=x.d,parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
     var t=parts.map(function(p){return p.thought?"":(p.text||"")}).join("").replace(/```json|```/g,"").trim();
-    if(web){var mm=t.match(/\{[^{}]*\}/);if(mm)t=mm[0]}
     var o;
     try{o=JSON.parse(t)}catch(e){throw{m:"結果を読み取れませんでした。もう一度検索してください。"}}
     var v={},ok=true;
@@ -292,12 +280,7 @@ function aiAsk(){
     calc(null);
     var en=$("ename");
     if(!en.value.trim())en.value=q;
-    if(web){
-      var g=cd&&cd.groundingMetadata,used=!!(g&&((g.webSearchQueries&&g.webSearchQueries.length)||(g.groundingChunks&&g.groundingChunks.length)));
-      aim(used?"ウェブ検索で調べました。公式ページの数値と合っているか確認してください。":"ウェブ検索の結果は使われませんでした(AIの推定値です)。ラベルと合っているか確認してください。");
-    }else{
-      aim("AIの推定値です。ラベルと合っているか確認してください。");
-    }
+    aim("AIの推定値です。ラベルと合っているか確認してください。");
   }).catch(function(e){
     if(e&&e.m){aim(e.m,1);return}
     aim("通信できませんでした("+(e&&e.name?e.name:"エラー")+": "+(e&&e.message?String(e.message).slice(0,80):"詳細なし")+")。",1);
