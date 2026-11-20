@@ -515,8 +515,9 @@ function hkSend(){
   if(dec||!inc)return;
   var now=new Date(),tm="12:00:00";
   if(cur===ymd(now))tm=p2(now.getHours())+":"+p2(now.getMinutes())+":"+p2(now.getSeconds());
+  var off=-now.getTimezoneOffset(),ao=Math.abs(off),tz=(off>=0?"+":"-")+p2(Math.floor(ao/60))+":"+p2(ao%60);
   D.sent[cur]=t;save();rHk();
-  var body={date:cur+"T"+tm,p:o.p,f:o.f,c:o.c,k:o.k};
+  var body={date:cur+"T"+tm+tz,p:o.p,f:o.f,c:o.c,k:o.k};
   location.href="shortcuts://run-shortcut?name="+encodeURIComponent("PFC送信")+"&input=text&text="+encodeURIComponent(JSON.stringify(body));
 }
 hk.addEventListener("click",function(e){
