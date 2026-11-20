@@ -28,6 +28,7 @@ function load(){try{var s=localStorage.getItem(KEY);if(s){var d=JSON.parse(s);if
 var D=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(x){$("warn").hidden=false}}
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+try{localStorage.removeItem("claude_pfc_pend")}catch(e){}
 function half(s){return String(s).replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/[．]/g,".").replace(/[，]/g,",")}
 function num(s){s=half(s).replace(/,/g,"").trim();if(s==="")return null;var n=Number(s);return isFinite(n)&&n>=0?n:NaN}
 function fmt(n){return String(Math.round(n*10)/10)}
@@ -200,9 +201,9 @@ aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-exp
 aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
 var aix=document.createElement("div");
 aix.className="card";aix.id="aibox";aix.hidden=true;
-aix.innerHTML='<input class="fi" id="aiq" placeholder="例:牛丼 並盛" autocomplete="off">'
+aix.innerHTML='<textarea class="fi" id="aiq" rows="2" placeholder="例:牛丼 並盛" autocomplete="off"></textarea>'
 +'<div style="display:flex;gap:8px;margin-top:8px"><button id="aigo" type="button" style="flex:1">検索</button><button id="aikey" type="button">キー設定</button></div>'
-+'<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="aiweb" style="width:20px;height:20px;flex:none"><span>ウェブ検索を使う<span class="rem">(外食・商品向け。時間がかかります)</span></span></label>'
++'<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="aiweb" style="width:20px;height:20px;flex:none"><span>Web検索を使う</span></label>'
 +'<div id="aikbox" hidden style="margin-top:8px"><div class="rem" style="margin-bottom:4px">Gemini のキー</div><input class="fi" id="aik" type="password" placeholder="Geminiのキーを貼り付け" autocomplete="off"><div class="rem" style="margin:8px 0 4px">Tavily のキー(ウェブ検索用)</div><input class="fi" id="aitk" type="password" placeholder="Tavilyのキーを貼り付け" autocomplete="off"><button id="aiks" type="button" style="width:100%;margin-top:8px">キーを保存</button></div>'
 +'<div id="aimsg" class="rem" style="margin-top:8px" aria-live="polite"></div>';
 var sbx=$("scanbox");sbx.parentNode.insertBefore(aib,sbx.nextSibling);aib.parentNode.insertBefore(aix,aib.nextSibling);
@@ -304,7 +305,7 @@ function tavilySearch(q,tk){
 }
 function aiAsk(){
   if(aiBusy)return;
-  var q=$("aiq").value.trim();
+  var q=$("aiq").value.replace(/\s+/g," ").trim();
   if(!q){aim("食品名と量を入力してください。",1);return}
   var key=getKey();
   if(!key){$("aikbox").hidden=false;aim("先にGeminiのキーを保存してください。",1);return}
@@ -331,7 +332,7 @@ function aiAsk(){
   }catch(e){chain=Promise.reject(e)}
   chain.then(function(r){
     var o=r.o;
-    if(web&&o&&o.found===false)throw{m:"検索結果から、数値を見つけられませんでした。「ウェブ検索を使う」を外すと、AIの推定値を出せます。"};
+    if(web&&o&&o.found===false)throw{m:"検索結果から、数値を見つけられませんでした。「Web検索を使う」を外すと、AIの推定値を出せます。"};
     var v={},ok=true;
     ["p","f","c"].forEach(function(k){var n=Number(o&&o[k]);if(!isFinite(n)||n<0)ok=false;v[k]=Math.round(n*10)/10});
     if(!ok)throw{m:"結果を読み取れませんでした。もう一度検索してください。"};
@@ -358,7 +359,7 @@ $("aigo").onclick=aiAsk;
 $("aiq").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();aiAsk()}});
 
 K4.forEach(function(i){el[i].addEventListener("input",function(){calc(i)})});
-function clr(){K4.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";setMsg("",false);bar.innerHTML="";ratio.textContent=""}
+function clr(){K4.forEach(function(i){el[i].value="";el[i].classList.remove("auto")});auto=null;scan.value="";scanmsg.textContent="";scanmsg.className="";$("aiq").value="";aim("");setMsg("",false);bar.innerHTML="";ratio.textContent=""}
 function csync(){
   [].forEach.call(document.querySelectorAll(".crow button"),function(b){
     b.setAttribute("aria-pressed",b.dataset.c===cat?"true":"false");
@@ -484,7 +485,7 @@ $("dprev").onclick=function(){cur=shift(cur,-1);editE=null;rToday()};
 $("dnext").onclick=function(){cur=shift(cur,1);editE=null;rToday()};
 $("dlabel").onclick=function(){cur=ymd(new Date());editE=null;rToday()};
 
-var PK="claude_pfc_pend",hk=document.createElement("div");
+var hk=document.createElement("div");
 hk.className="card";hk.id="hk";
 var hkp=$("elist").parentNode;hkp.parentNode.insertBefore(hk,hkp.nextSibling);
 function r1(n){return Math.round(n*10)/10}
@@ -514,21 +515,9 @@ function hkSend(){
   if(dec||!inc)return;
   var now=new Date(),tm="12:00:00";
   if(cur===ymd(now))tm=p2(now.getHours())+":"+p2(now.getMinutes())+":"+p2(now.getSeconds());
-  try{localStorage.setItem(PK,JSON.stringify({date:cur,t:t}))}catch(e){}
+  D.sent[cur]=t;save();rHk();
   var body={date:cur+"T"+tm,p:o.p,f:o.f,c:o.c,k:o.k};
   location.href="shortcuts://run-shortcut?name="+encodeURIComponent("PFC送信")+"&input=text&text="+encodeURIComponent(JSON.stringify(body));
-}
-function hkAsk(){
-  var s=null,p;
-  try{s=localStorage.getItem(PK)}catch(e){}
-  if(!s)return;
-  try{localStorage.removeItem(PK)}catch(e){}
-  try{p=JSON.parse(s)}catch(e){return}
-  if(!p||!p.date||!p.t)return;
-  if(confirm(lab(p.date)+"の分を、ヘルスケアに送れましたか?\n「OK」=送れた / 「キャンセル」=送れていない")){
-    D.sent[p.date]=p.t;save();
-  }
-  rHk();
 }
 hk.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -539,7 +528,6 @@ hk.addEventListener("click",function(e){
     if(confirm("この日の送信記録を消します。ヘルスケアに入っているデータは消えません。よろしいですか?")){delete D.sent[cur];save();rHk()}
   }
 });
-document.addEventListener("visibilitychange",function(){if(!document.hidden)setTimeout(hkAsk,400)});
 
 var gAuto=null;
 function gm(t,e){say("gmsg",t,e)}
@@ -817,6 +805,5 @@ document.addEventListener("touchend",function(e){
 },{passive:true});
 document.addEventListener("touchcancel",function(){sok=false;endDrag(0,1)},{passive:true});
 show("today");
-hkAsk();
 })();
 if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){})})}
