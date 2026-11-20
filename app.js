@@ -194,7 +194,7 @@ $("scanbtn").onclick=function(){
   if(!b.hidden)scan.focus();
 };
 
-var GK="claude_pfc_gkey",GMODELS=["gemini-flash-lite-latest","gemini-flash-latest"],aiBusy=false;
+var GK="claude_pfc_gkey",TK="claude_pfc_tkey",GMODELS=["gemini-flash-lite-latest","gemini-flash-latest"],aiBusy=false;
 var aib=document.createElement("button");
 aib.id="aibtn";aib.type="button";aib.className="wide";aib.setAttribute("aria-expanded","false");
 aib.innerHTML='<i class="ic">'+svg("sparkles")+'</i>AIで検索';
@@ -202,11 +202,13 @@ var aix=document.createElement("div");
 aix.className="card";aix.id="aibox";aix.hidden=true;
 aix.innerHTML='<input class="fi" id="aiq" placeholder="例:牛丼 並盛" autocomplete="off">'
 +'<div style="display:flex;gap:8px;margin-top:8px"><button id="aigo" type="button" style="flex:1">検索</button><button id="aikey" type="button">キー設定</button></div>'
-+'<div id="aikbox" hidden style="margin-top:8px"><input class="fi" id="aik" type="password" placeholder="APIキーを貼り付け" autocomplete="off"><button id="aiks" type="button" style="width:100%;margin-top:8px">キーを保存</button></div>'
++'<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="aiweb" style="width:20px;height:20px;flex:none"><span>ウェブ検索を使う<span class="rem">(外食・商品向け。時間がかかります)</span></span></label>'
++'<div id="aikbox" hidden style="margin-top:8px"><div class="rem" style="margin-bottom:4px">Gemini のキー</div><input class="fi" id="aik" type="password" placeholder="Geminiのキーを貼り付け" autocomplete="off"><div class="rem" style="margin:8px 0 4px">Tavily のキー(ウェブ検索用)</div><input class="fi" id="aitk" type="password" placeholder="Tavilyのキーを貼り付け" autocomplete="off"><button id="aiks" type="button" style="width:100%;margin-top:8px">キーを保存</button></div>'
 +'<div id="aimsg" class="rem" style="margin-top:8px" aria-live="polite"></div>';
 var sbx=$("scanbox");sbx.parentNode.insertBefore(aib,sbx.nextSibling);aib.parentNode.insertBefore(aix,aib.nextSibling);
 function aim(t,e){say("aimsg",t,e)}
 function getKey(){try{return localStorage.getItem(GK)||""}catch(e){return""}}
+function getTK(){try{return localStorage.getItem(TK)||""}catch(e){return""}}
 function badKey(k){return /[^\x21-\x7E]/.test(k)}
 aib.onclick=function(){
   aix.hidden=!aix.hidden;
@@ -215,14 +217,18 @@ aib.onclick=function(){
 };
 $("aikey").onclick=function(){
   var b=$("aikbox");b.hidden=!b.hidden;
-  if(!b.hidden){aim(getKey()?"キーは保存済みです。新しいキーを保存すると置き換わります。":"");$("aik").focus()}
+  if(!b.hidden){aim("Gemini: "+(getKey()?"保存済み":"未保存")+" / Tavily: "+(getTK()?"保存済み":"未保存")+"。新しいキーを保存すると置き換わります。");$("aik").focus()}
 };
 $("aiks").onclick=function(){
-  var v=$("aik").value.trim();
-  if(!v){aim("キーを貼り付けてください。",1);return}
-  if(badKey(v)){aim("キーに使えない文字(全角文字・空白・改行など)が含まれています。キーだけをコピーして、もう一度貼り付けてください。",1);return}
-  try{localStorage.setItem(GK,v)}catch(e){aim("キーを保存できませんでした。",1);return}
-  $("aik").value="";$("aikbox").hidden=true;aim("キーを保存しました。");
+  var g=$("aik").value.trim(),t=$("aitk").value.trim(),done=[];
+  if(!g&&!t){aim("保存するキーを貼り付けてください。",1);return}
+  if((g&&badKey(g))||(t&&badKey(t))){aim("キーに使えない文字(全角文字・空白・改行など)が含まれています。キーだけをコピーして、もう一度貼り付けてください。",1);return}
+  try{
+    if(g){localStorage.setItem(GK,g);done.push("Gemini")}
+    if(t){localStorage.setItem(TK,t);done.push("Tavily")}
+  }catch(e){aim("キーを保存できませんでした。",1);return}
+  $("aik").value="";$("aitk").value="";$("aikbox").hidden=true;
+  aim(done.join("と")+"のキーを保存しました。");
 };
 function callG(model,key,body){
   return fetch("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",{
@@ -239,17 +245,24 @@ function askG(i,key,body){
     return x;
   });
 }
-function aiAsk(){
-  if(aiBusy)return;
-  var q=$("aiq").value.trim();
-  if(!q){aim("食品名と量を入力してください。",1);return}
-  var key=getKey();
-  if(!key){$("aikbox").hidden=false;aim("先にAPIキーを保存してください。",1);return}
-  if(badKey(key)){$("aikbox").hidden=false;aim("保存されているキーに使えない文字が含まれています。「キー設定」から、もう一度保存してください。",1);return}
-  aiBusy=true;
-  var go=$("aigo");go.textContent="検索中…";aim("");
+function chkG(x){
+  if(!x.ok){
+    var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
+    if(x.st===503||x.st===500)throw{m:"Geminiが混雑しています。少し待ってから、もう一度お試しください。"};
+    if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
+    if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
+    if(x.st===404)throw{m:"モデルが見つかりません("+x.model+")。"+det};
+    throw{m:"検索できませんでした(エラー "+x.st+")。"+det};
+  }
+  var d=x.d,parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+  var t=parts.map(function(p){return p.thought?"":(p.text||"")}).join("").replace(/```json|```/g,"").trim();
+  var o;
+  try{o=JSON.parse(t)}catch(e){throw{m:"結果を読み取れませんでした。もう一度検索してください。"}}
+  return o;
+}
+function plainBody(q){
   var prompt="次の食品の栄養成分を、日本で一般的な数値で推定してください。\n食品名と量: "+q+"\n量の指定がなければ、一般的な1人前の量とします。たんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で返してください。炭水化物は、食物繊維を含む値にしてください。";
-  var body={
+  return{
     contents:[{parts:[{text:prompt}]}],
     generationConfig:{
       temperature:0,
@@ -257,21 +270,68 @@ function aiAsk(){
       responseSchema:{type:"OBJECT",properties:{p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"}},required:["p","f","c"]}
     }
   };
-  var req;
-  try{req=askG(0,key,body)}catch(e){req=Promise.reject(e)}
-  req.then(function(x){
-    if(!x.ok){
-      var det=x.d&&x.d.error&&x.d.error.message?"("+String(x.d.error.message).slice(0,70)+")":"";
-      if(x.st===503||x.st===500)throw{m:"Geminiが混雑しています。少し待ってから、もう一度お試しください。"};
-      if(x.st===429)throw{m:"無料枠の上限に達しました。しばらくしてからもう一度お試しください。"};
-      if(x.st===401||x.st===403)throw{m:"APIキーが正しくないか、使えない状態です。「キー設定」を確認してください。"+det};
-      if(x.st===404)throw{m:"モデルが見つかりません("+x.model+")。"+det};
-      throw{m:"検索できませんでした(エラー "+x.st+")。"+det};
+}
+function webBody(q,rs){
+  var list=rs.map(function(r,i){return"["+(i+1)+"] "+(r.title||"")+"\n"+(r.url||"")+"\n"+String(r.content||"").slice(0,700)}).join("\n\n");
+  var prompt="次は、「"+q+"」の栄養成分についてのウェブ検索結果です。\n\n"+list+"\n\n上の検索結果だけを根拠に、「"+q+"」のたんぱく質(p)・脂質(f)・炭水化物(c)を、グラム単位の数値で答えてください。お店や会社の公式サイトの数値があれば、それを優先してください。量の指定がなければ、一般的な1人前の量とします。どの結果にも該当する数値がない場合は、found を false にしてください。数値の根拠にした検索結果の番号を src に入れてください。";
+  return{
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{
+      temperature:0,
+      responseMimeType:"application/json",
+      responseSchema:{type:"OBJECT",properties:{found:{type:"BOOLEAN"},p:{type:"NUMBER"},f:{type:"NUMBER"},c:{type:"NUMBER"},src:{type:"INTEGER"}},required:["found","p","f","c"]}
     }
-    var d=x.d,parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
-    var t=parts.map(function(p){return p.thought?"":(p.text||"")}).join("").replace(/```json|```/g,"").trim();
-    var o;
-    try{o=JSON.parse(t)}catch(e){throw{m:"結果を読み取れませんでした。もう一度検索してください。"}}
+  };
+}
+function tavilySearch(q,tk){
+  return fetch("https://api.tavily.com/search",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk},
+    body:JSON.stringify({query:q+" 栄養成分 カロリー たんぱく質 脂質 炭水化物",search_depth:"basic",max_results:5})
+  }).then(function(r){
+    return r.json().catch(function(){return null}).then(function(d){return{ok:r.ok,st:r.status,d:d}});
+  }).then(function(x){
+    if(!x.ok){
+      if(x.st===401||x.st===403)throw{m:"Tavilyのキーが正しくないか、使えない状態です。「キー設定」を確認してください。"};
+      if(x.st===429||x.st===432||x.st===433)throw{m:"Tavilyの利用上限に達しました。"};
+      throw{m:"ウェブ検索(Tavily)に失敗しました(エラー "+x.st+")。"};
+    }
+    return(x.d&&x.d.results)||[];
+  }).catch(function(e){
+    if(e&&e.m)throw e;
+    throw{m:"ウェブ検索(Tavily)に接続できませんでした("+(e&&e.name?e.name:"エラー")+": "+(e&&e.message?String(e.message).slice(0,60):"詳細なし")+")。ブラウザからの接続が許可されていない可能性があります。"};
+  });
+}
+function aiAsk(){
+  if(aiBusy)return;
+  var q=$("aiq").value.trim();
+  if(!q){aim("食品名と量を入力してください。",1);return}
+  var key=getKey();
+  if(!key){$("aikbox").hidden=false;aim("先にGeminiのキーを保存してください。",1);return}
+  if(badKey(key)){$("aikbox").hidden=false;aim("保存されているGeminiのキーに使えない文字が含まれています。「キー設定」から、もう一度保存してください。",1);return}
+  var web=$("aiweb").checked,tk="";
+  if(web){
+    tk=getTK();
+    if(!tk){$("aikbox").hidden=false;aim("先にTavilyのキーを保存してください。",1);return}
+    if(badKey(tk)){$("aikbox").hidden=false;aim("保存されているTavilyのキーに使えない文字が含まれています。「キー設定」から、もう一度保存してください。",1);return}
+  }
+  aiBusy=true;
+  var go=$("aigo");go.textContent="検索中…";
+  aim(web?"ウェブで調べています。少し時間がかかります。":"");
+  var chain;
+  try{
+    if(web){
+      chain=tavilySearch(q,tk).then(function(rs){
+        if(!rs.length)throw{m:"ウェブ検索の結果がありませんでした。食品名を変えて、もう一度お試しください。"};
+        return askG(0,key,webBody(q,rs)).then(chkG).then(function(o){return{o:o,rs:rs}});
+      });
+    }else{
+      chain=askG(0,key,plainBody(q)).then(chkG).then(function(o){return{o:o,rs:null}});
+    }
+  }catch(e){chain=Promise.reject(e)}
+  chain.then(function(r){
+    var o=r.o;
+    if(web&&o&&o.found===false)throw{m:"検索結果から、数値を見つけられませんでした。「ウェブ検索を使う」を外すと、AIの推定値を出せます。"};
     var v={},ok=true;
     ["p","f","c"].forEach(function(k){var n=Number(o&&o[k]);if(!isFinite(n)||n<0)ok=false;v[k]=Math.round(n*10)/10});
     if(!ok)throw{m:"結果を読み取れませんでした。もう一度検索してください。"};
@@ -280,7 +340,13 @@ function aiAsk(){
     calc(null);
     var en=$("ename");
     if(!en.value.trim())en.value=q;
-    aim("AIの推定値です。ラベルと合っているか確認してください。");
+    if(web){
+      var n=Number(o.src),site="";
+      if(r.rs&&n>=1&&n<=r.rs.length){try{site=new URL(r.rs[n-1].url).hostname}catch(e){}}
+      aim(site?"「"+site+"」の情報から取り出しました。公式ページの数値と合っているか確認してください。":"ウェブ検索の結果から取り出しました。公式ページの数値と合っているか確認してください。");
+    }else{
+      aim("AIの推定値です。ラベルと合っているか確認してください。");
+    }
   }).catch(function(e){
     if(e&&e.m){aim(e.m,1);return}
     aim("通信できませんでした("+(e&&e.name?e.name:"エラー")+": "+(e&&e.message?String(e.message).slice(0,80):"詳細なし")+")。",1);
