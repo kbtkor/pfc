@@ -30,7 +30,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-vi
 #addother,#odgo,#odate{background:var(--btn-b);border-color:var(--btn-b);color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .fi{width:100%;font-size:16px;font-family:inherit;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);padding:8px 10px}
-#aiq{display:block;resize:none;border-color:var(--tb,var(--line))}
+#aiq{display:block;resize:none}
 .fi.auto{color:var(--sub);border-style:dashed}
 #odate{display:block;width:100%;min-width:0;max-width:100%;margin:0;min-height:44px;-webkit-appearance:none;appearance:none;text-align:center;-webkit-text-fill-color:#fff}
 #odate::-webkit-date-and-time-value{text-align:center}
