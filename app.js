@@ -509,15 +509,17 @@ function rHk(){
   }
   hk.innerHTML=h;
 }
+var MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function hkSend(){
   var t=hkTot(),s=D.sent[cur]||{p:0,f:0,c:0,k:0},o={},dec=false,inc=false;
   K4.forEach(function(k){o[k]=r1(t[k]-s[k]);if(o[k]<0)dec=true;if(o[k]>0)inc=true});
   if(dec||!inc)return;
-  var now=new Date(),tm="12:00:00";
-  if(cur===ymd(now))tm=p2(now.getHours())+":"+p2(now.getMinutes())+":"+p2(now.getSeconds());
-  var off=-now.getTimezoneOffset(),ao=Math.abs(off),tz=(off>=0?"+":"-")+p2(Math.floor(ao/60))+":"+p2(ao%60);
+  var now=new Date(),H=12,M=0,S=0;
+  if(cur===ymd(now)){H=now.getHours();M=now.getMinutes();S=now.getSeconds()}
+  var a=cur.split("-");
+  var ds=MN[+a[1]-1]+" "+(+a[2])+", "+a[0]+" "+(H%12||12)+":"+p2(M)+":"+p2(S)+" "+(H<12?"AM":"PM");
   D.sent[cur]=t;save();rHk();
-  var body={date:cur+"T"+tm+tz,p:o.p,f:o.f,c:o.c,k:o.k};
+  var body={date:ds,p:o.p,f:o.f,c:o.c,k:o.k};
   location.href="shortcuts://run-shortcut?name="+encodeURIComponent("PFC送信")+"&input=text&text="+encodeURIComponent(JSON.stringify(body));
 }
 hk.addEventListener("click",function(e){
